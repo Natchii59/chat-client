@@ -1,9 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./src/**/*.{ts,tsx}', './index.html'],
-  darkMode: 'media',
+  darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        nunito: ['Nunito', 'sans-serif']
+      },
       padding: {
         18: '4.5rem'
       },
@@ -12,5 +15,5 @@ module.exports = {
       }
     }
   },
-  plugins: []
+  plugins: [require('@headlessui/tailwindcss')]
 }

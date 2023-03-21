@@ -1,10 +1,17 @@
 import { createContext } from 'react'
-import { io } from 'socket.io-client'
+import { Socket, io } from 'socket.io-client'
 
-export const socket = io(import.meta.env.VITE_APP_API_URL, {
-  extraHeaders: {
-    Authorization: localStorage.getItem('accessToken')!
-  }
+interface SocketContextProps {
+  socket: Socket
+}
+
+export const socket = io(import.meta.env.VITE_API_URL, {
+  auth: {
+    token: localStorage.getItem('accessToken')
+  },
+  autoConnect: false
 })
 
-export const SocketContext = createContext(socket)
+export const SocketContext = createContext<SocketContextProps>({
+  socket
+})

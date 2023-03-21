@@ -4,11 +4,22 @@ import {
   createApi,
   fetchBaseQuery
 } from '@reduxjs/toolkit/query/react'
-import { ErrorOutput, RefreshTokensOutput } from '../utils/types'
-import { logout } from '../stores/auth/authSlice'
+
+import { ErrorOutput } from '@/utils/types'
+import { logout } from '@/stores/auth/authSlice'
+
+export interface RefreshTokensOutput {
+  errors: ErrorOutput[] | null
+  data: {
+    RefreshTokens: {
+      accessToken: string
+      refreshToken: string
+    }
+  }
+}
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: `${import.meta.env.VITE_APP_API_URL}/graphql`,
+  baseUrl: `${import.meta.env.VITE_API_URL}/graphql`,
   method: 'POST',
   prepareHeaders: headers => {
     headers.append('Content-Type', 'application/json')
@@ -78,5 +89,6 @@ const baseQueryWithReauth = async (
 
 export const apiSlice = createApi({
   baseQuery: baseQueryWithReauth,
-  endpoints: () => ({})
+  endpoints: () => ({}),
+  keepUnusedDataFor: 0
 })

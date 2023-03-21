@@ -1,10 +1,17 @@
-import { useEffect } from 'react'
+import { useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
-import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { useAuthenticateQuery } from '../stores/auth/authApiSlice'
-import { AppDispatch } from '../stores'
-import { setUser } from '../stores/auth/authSlice'
+import { useAuthenticateQuery } from '@/stores/auth/authApiSlice'
+import { AppDispatch } from '@/stores'
+import { setUser } from '@/stores/auth/authSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
+import { setConversations } from '@/stores/conversations/conversationsSlice'
+import {
+  setFriends,
+  setReceivedRequests,
+  setSentRequests
+} from '@/stores/friends/friendsSlice'
 
 function RequireAuth() {
   const location = useLocation()
@@ -12,27 +19,51 @@ function RequireAuth() {
 
   const dispatch = useDispatch<AppDispatch>()
 
-  const { data, isLoading } = useAuthenticateQuery()
+  const { data: dataAuth, isLoading } = useAuthenticateQuery()
+
+  const { socket } = useContext(SocketContext)
 
   const routesWithoutAuth = ['/sign-in', '/sign-up']
 
   useEffect(() => {
-    if (isLoading) return
+    if (isLoading || !dataAuth) return
+
+    const { data, errors } = dataAuth
 
     if (
-      (!data?.data.Profile || data?.errors) &&
+      (errors?.length || !data?.Profile) &&
       !routesWithoutAuth.includes(location.pathname)
     ) {
-      navigate('/sign-in', { state: { from: location } })
+      socket.disconnect()
+
+      navigate('/sign-in', {
+        replace: true,
+        state: { from: location.pathname }
+      })
+      return
     } else {
-      dispatch(setUser(data?.data.Profile))
+      if (!data?.Profile) return
+
+      const {
+        conversations,
+        friends,
+        receivedRequests,
+        sentRequests,
+        ...user
+      } = data.Profile
+      dispatch(setUser(user))
+      dispatch(setConversations(conversations))
+      dispatch(setFriends(friends))
+      dispatch(setReceivedRequests(receivedRequests))
+      dispatch(setSentRequests(sentRequests))
+
+      socket.connect()
     }
-  }, [data])
+  }, [dataAuth])
 
-  if (isLoading) return <div />
+  if (isLoading || !dataAuth?.data) return <></>
 
-  if (data) return <Outlet />
-  return <Navigate to='/sign-in' state={{ from: location }} replace />
+  return <Outlet />
 }
 
 export default RequireAuth

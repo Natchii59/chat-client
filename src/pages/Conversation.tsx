@@ -1,127 +1,89 @@
-import { useContext, useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { useSelector } from 'react-redux'
+import { useContext, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 
+import { useConversationQuery } from '@/stores/conversation/conversationApiSlice'
+import { selectUser } from '@/stores/auth/authSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
+import MessageBoxInput from '@/components/Conversation/MessageBoxInput'
+import { AppDispatch } from '@/stores'
 import {
-  useConversationMessagesQuery,
-  useConversationQuery
-} from '../stores/callApiSlice'
-import { selectUser } from '../stores/auth/authSlice'
-import { SocketContext } from '../utils/contexts/SocketContext'
-import { Message } from '../utils/types'
-import MessageComponent from '../components/Message'
-import MessageBoxInput from '../components/MessageBoxInput'
-import moment from 'moment'
+  selectConversationUser,
+  setConversationId,
+  setConversationIsTyping,
+  setConversationMessages,
+  setConversationTotalCount,
+  setConversationUser
+} from '@/stores/conversation/conversationSlice'
+import { removeTypingConversation } from '@/stores/conversations/conversationsSlice'
+import MessagesList from '@/components/Conversation/MessagesList'
 
 function Conversation() {
   const { id } = useParams()
 
-  const [messages, setMessages] = useState<Message[]>([])
+  const navigate = useNavigate()
+
+  const dispatch = useDispatch<AppDispatch>()
 
   const currentUser = useSelector(selectUser)
+  const userConversation = useSelector(selectConversationUser)
 
-  const socket = useContext(SocketContext)
+  const { socket } = useContext(SocketContext)
 
-  const messagesRef = useRef<HTMLDivElement>(null)
-
-  const { data: dataConversation, isLoading: isLoadingConversation } =
-    useConversationQuery({
-      id: id || ''
-    })
-
-  const { data: dataMessages, isLoading: isLoadingMessages } =
-    useConversationMessagesQuery({
-      skip: 0,
-      take: 100,
-      where: {
-        conversationId: id || ''
-      },
-      sortBy: {
-        createdAt: 'DESC'
-      }
-    })
-
-  const otherUser =
-    dataConversation?.data.FindOneConversation.user1.id === currentUser?.id
-      ? dataConversation?.data.FindOneConversation.user2
-      : dataConversation?.data.FindOneConversation.user1
+  const { data: dataConversation, isLoading } = useConversationQuery({
+    id: id ?? ''
+  })
 
   useEffect(() => {
     socket.emit('onConversationJoin', { conversationId: id })
 
-    socket.on('userJoin', () => {
-      console.log('user join')
-    })
-
-    socket.on('userLeave', () => {
-      console.log('user leave')
-    })
-
-    socket.on('onMessage', (payload: Message) => {
-      setMessages(prev => [payload, ...prev])
-    })
-
     return () => {
       socket.emit('onConversationLeave', { conversationId: id })
-      socket.off('userJoin')
-      socket.off('userLeave')
-      socket.off('onMessage')
     }
   }, [id])
 
   useEffect(() => {
-    if (!dataMessages) return
+    if (!dataConversation) return
 
-    setMessages(dataMessages.data.PaginationMessage.nodes)
+    const { errors, data } = dataConversation
+
+    if (errors?.length || !data?.FindOneConversation) {
+      navigate('/', { replace: true })
+      return
+    }
+
+    dispatch(setConversationId(data.FindOneConversation.id))
+    dispatch(
+      setConversationUser(
+        data.FindOneConversation.user1.id === currentUser?.id
+          ? data.FindOneConversation.user2
+          : data.FindOneConversation.user1
+      )
+    )
+    dispatch(setConversationIsTyping(false))
+    dispatch(removeTypingConversation(data.FindOneConversation.id))
 
     return () => {
-      setMessages([])
+      dispatch(setConversationId(null))
+      dispatch(setConversationUser(null))
+      dispatch(setConversationMessages([]))
+      dispatch(setConversationTotalCount(null))
     }
-  }, [dataMessages])
+  }, [dataConversation])
 
-  useEffect(() => {
-    if (!messagesRef.current) return
-
-    messagesRef.current.scrollTo({
-      top: messagesRef.current.scrollHeight,
-      behavior: 'smooth'
-    })
-  }, [messages])
-
-  if (isLoadingConversation) {
-    return <div>loading...</div>
+  if (isLoading) {
+    return <div>Loading...</div>
   }
 
   return (
-    <div className='flex flex-col items-start h-screen'>
-      <div className='w-full px-4 py-3 bg-zinc-200/50 dark:bg-zinc-800/50'>
-        <p className='text-lg font-medium'>{otherUser?.username}</p>
+    <div className='flex flex-col items-start h-screen p-2'>
+      <div className='w-full px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center gap-2'>
+        <p className='text-lg font-extrabold'>{userConversation?.username}</p>
       </div>
 
-      <div
-        ref={messagesRef}
-        className='flex-1 min-h-0 overflow-y-scroll flex flex-col-reverse items-start w-full'
-      >
-        {isLoadingMessages ? (
-          <div>loading...</div>
-        ) : (
-          messages.map((message, index) => (
-            <MessageComponent
-              key={message.id}
-              message={message}
-              showUser={
-                message.user.id !== messages[index + 1]?.user.id ||
-                moment(message.createdAt).diff(
-                  moment(messages[index + 1]?.createdAt),
-                  'minutes'
-                ) > 10
-              }
-            />
-          ))
-        )}
-      </div>
+      <MessagesList />
 
-      <MessageBoxInput user={otherUser!} conversationId={id!} />
+      <MessageBoxInput />
     </div>
   )
 }

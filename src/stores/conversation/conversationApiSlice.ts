@@ -1,45 +1,61 @@
-import { apiSlice } from '../api/apiSlice'
-import {
-  CreateMessageInput,
-  CreateMessageOutput,
-  FindOneConversationInput,
-  FindOneConversationOutput,
-  GetConversationsOutput,
-  PaginationMessageInput,
-  PaginationMessageOutput
-} from '../utils/types'
+import { apiSlice } from '@/api/apiSlice'
+import { ErrorOutput } from '@/utils/types'
+import { Conversation, Message } from './conversationSlice'
+
+export interface FindOneConversationInput {
+  id: string
+}
+
+export interface PaginationMessageWhere {
+  id?: string
+  createdAt?: Date | string
+  conversationId?: string
+}
+
+export interface PaginationMessageSortBy {
+  id?: 'ASC' | 'DESC'
+  createdAt?: 'ASC' | 'DESC'
+  updatedAt?: 'ASC' | 'DESC'
+}
+
+export interface PaginationMessageInput {
+  skip: number
+  take: number
+  where?: PaginationMessageWhere
+  sortBy?: PaginationMessageSortBy
+}
+
+export interface CreateMessageInput {
+  content: string
+  conversationId: string
+}
+
+export interface FindOneConversationOutput {
+  errors: ErrorOutput[] | null
+  data: {
+    FindOneConversation: Conversation
+  } | null
+}
+
+export interface PaginationMessageOutput {
+  errors: ErrorOutput[] | null
+  data: {
+    PaginationMessage: {
+      totalCount: number
+      nodes: Message[]
+    }
+  } | null
+}
+
+export interface CreateMessageOutput {
+  errors: ErrorOutput[] | null
+  data: {
+    CreateMessage: Message
+  }
+}
 
 export const callApiSlice = apiSlice.injectEndpoints({
   endpoints: builder => ({
-    conversations: builder.query<GetConversationsOutput, void>({
-      query: () => ({
-        url: '',
-        body: {
-          query: `
-            query {
-              Profile {
-                conversations {
-                  id
-                  user1 {
-                    id
-                    username
-                  }
-                  user2 {
-                    id
-                    username
-                  }
-                  lastMessage {
-                    id
-                    content
-                    createdAt
-                  }
-                }
-              }
-            }
-          `
-        }
-      })
-    }),
     conversation: builder.query<
       FindOneConversationOutput,
       FindOneConversationInput
@@ -54,10 +70,12 @@ export const callApiSlice = apiSlice.injectEndpoints({
                 user1 {
                   id
                   username
+                  avatar
                 }
                 user2 {
                   id
                   username
+                  avatar
                 }
               }
             }
@@ -84,6 +102,7 @@ export const callApiSlice = apiSlice.injectEndpoints({
                   user {
                     id
                     username
+                    avatar
                   }
                 }
               }
@@ -106,6 +125,7 @@ export const callApiSlice = apiSlice.injectEndpoints({
                 user {
                   id
                   username
+                  avatar
                 }
                 conversation {
                   id
@@ -129,7 +149,6 @@ export const callApiSlice = apiSlice.injectEndpoints({
 })
 
 export const {
-  useConversationsQuery,
   useConversationQuery,
   useConversationMessagesQuery,
   useCreateMessageMutation

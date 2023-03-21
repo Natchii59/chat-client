@@ -1,8 +1,19 @@
 import { createSlice } from '@reduxjs/toolkit'
-import { Socket } from 'socket.io-client'
 
 import { RootState } from '../index'
-import { User } from '../../utils/types'
+import { Conversation } from '../conversation/conversationSlice'
+
+export interface User {
+  id: string
+  username: string
+  avatar?: string
+  createdAt: Date
+  updatedAt: Date
+  conversations: Conversation[]
+  friends: User[]
+  receivedRequests: User[]
+  sentRequests: User[]
+}
 
 export interface AuthState {
   user: User | null
