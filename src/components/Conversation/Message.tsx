@@ -1,5 +1,4 @@
 import moment from 'moment'
-import { LegacyRef } from 'react'
 
 import { Message } from '@/stores/conversation/conversationSlice'
 import ImageOptimized from '../ImageOptimized'
@@ -7,19 +6,14 @@ import ImageOptimized from '../ImageOptimized'
 interface MessageProps {
   message: Message
   showUser: boolean
-  firstMessageRef?: LegacyRef<HTMLDivElement>
 }
 
-function MessageComponent({
-  message,
-  showUser,
-  firstMessageRef
-}: MessageProps) {
+function MessageComponent({ message, showUser }: MessageProps) {
   const date = moment(message.createdAt).calendar()
   const hours = moment(message.createdAt).format('HH:mm')
 
   return (
-    <div ref={firstMessageRef} className='relative w-full last:mb-4'>
+    <div className='relative w-full'>
       <div
         className={`w-full py-0.5 pl-18 pr-12 hover:bg-zinc-100 hover:dark:bg-zinc-800/30 rounded-xl group ${
           showUser && 'mt-4'
