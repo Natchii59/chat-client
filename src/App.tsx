@@ -12,6 +12,7 @@ import SignUp from './pages/SignUp'
 import { SocketContext, socket } from './utils/contexts/SocketContext'
 import { store } from './stores'
 import InformationDialog from './components/InformationDialog'
+import Error from './pages/Error'
 
 function Providers({ children }: PropsWithChildren) {
   return (
@@ -39,6 +40,7 @@ function App() {
           </Route>
         </Route>
 
+        <Route path='error' element={<Error />} />
         <Route path='*' element={<Navigate replace to='/' />} />
       </Routes>
     </Providers>

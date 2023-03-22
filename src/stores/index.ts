@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 
 import { apiSlice } from '@/api/apiSlice'
-import authReducer from './auth/authSlice'
+import userReducer from './user/userSlice'
 import conversationReducer from './conversation/conversationSlice'
 import conversationsReducer from './conversations/conversationsSlice'
 import friendsReducer from './friends/friendsSlice'
@@ -11,7 +11,7 @@ export const store = configureStore({
   reducer: {
     [apiSlice.reducerPath]: apiSlice.reducer,
 
-    auth: authReducer,
+    user: userReducer,
     conversation: conversationReducer,
     conversations: conversationsReducer,
     friends: friendsReducer,

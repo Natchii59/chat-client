@@ -2,9 +2,9 @@ import { useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { useAuthenticateQuery } from '@/stores/auth/authApiSlice'
+import { useAuthenticateQuery } from '@/stores/user/authApiSlice'
 import { AppDispatch } from '@/stores'
-import { setUser } from '@/stores/auth/authSlice'
+import { setUser } from '@/stores/user/userSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 import { setConversations } from '@/stores/conversations/conversationsSlice'
 import {
@@ -19,13 +19,18 @@ function RequireAuth() {
 
   const dispatch = useDispatch<AppDispatch>()
 
-  const { data: dataAuth, isLoading } = useAuthenticateQuery()
+  const { data: dataAuth, isLoading, isError, error } = useAuthenticateQuery()
 
   const { socket } = useContext(SocketContext)
 
   const routesWithoutAuth = ['/sign-in', '/sign-up']
 
   useEffect(() => {
+    if (isError) {
+      navigate('/error')
+      return
+    }
+
     if (isLoading || !dataAuth) return
 
     const { data, errors } = dataAuth
@@ -59,7 +64,7 @@ function RequireAuth() {
 
       socket.connect()
     }
-  }, [dataAuth])
+  }, [dataAuth, error])
 
   if (isLoading || !dataAuth?.data) return <></>
 

@@ -6,7 +6,7 @@ import {
 } from '@reduxjs/toolkit/query/react'
 
 import { ErrorOutput } from '@/utils/types'
-import { logout } from '@/stores/auth/authSlice'
+import { logout } from '@/stores/user/userSlice'
 
 export interface RefreshTokensOutput {
   errors: ErrorOutput[] | null
@@ -40,6 +40,10 @@ const baseQueryWithReauth = async (
   extraOptions: any
 ) => {
   let result = await baseQuery(args, api, extraOptions)
+
+  if (result.error) {
+    return result
+  }
 
   const errors = (result.data as any).errors as ErrorOutput[]
 

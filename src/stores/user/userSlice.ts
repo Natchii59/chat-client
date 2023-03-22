@@ -3,10 +3,18 @@ import { createSlice } from '@reduxjs/toolkit'
 import { RootState } from '../index'
 import { Conversation } from '../conversation/conversationSlice'
 
+export interface Image {
+  id: string
+  createdAt: Date
+  updatedAt: Date
+  key: string
+  blurhash: string
+}
+
 export interface User {
   id: string
   username: string
-  avatar?: string
+  avatar?: Image
   createdAt: Date
   updatedAt: Date
   conversations: Conversation[]
@@ -15,16 +23,16 @@ export interface User {
   sentRequests: User[]
 }
 
-export interface AuthState {
+export interface UserState {
   user: User | null
 }
 
-const initialState: AuthState = {
+const initialState: UserState = {
   user: null
 }
 
-export const authSlice = createSlice({
-  name: 'auth',
+export const userSlice = createSlice({
+  name: 'user',
   initialState,
   reducers: {
     setUser: (state, action) => {
@@ -38,7 +46,7 @@ export const authSlice = createSlice({
   }
 })
 
-export const { setUser, logout } = authSlice.actions
-export default authSlice.reducer
+export const { setUser, logout } = userSlice.actions
+export default userSlice.reducer
 
-export const selectUser = (state: RootState) => state.auth.user
+export const selectUser = (state: RootState) => state.user.user

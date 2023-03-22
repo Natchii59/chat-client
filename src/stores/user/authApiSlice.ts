@@ -1,23 +1,32 @@
 import { apiSlice } from '@/api/apiSlice'
-import { User } from './authSlice'
+import { User } from './userSlice'
 import { ErrorOutput } from '@/utils/types'
 
 const userFieldOutput = `
 id
 username
-avatar
 createdAt
+avatar {
+  key
+  blurhash
+}
 conversations {
   id
   user1 {
     id
     username
-    avatar
+    avatar {
+      key
+      blurhash
+    }
   }
   user2 {
     id
     username
-    avatar
+    avatar {
+      key
+      blurhash
+    }
   }
   lastMessage {
     id
@@ -28,17 +37,26 @@ conversations {
 friends {
   id
   username
-  avatar
+  avatar {
+    key
+    blurhash
+  }
 }
 receivedRequests {
   id
   username
-  avatar
+  avatar {
+    key
+    blurhash
+  }
 }
 sentRequests {
   id
   username
-  avatar
+  avatar {
+    key
+    blurhash
+  }
 }
 `
 

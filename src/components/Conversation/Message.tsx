@@ -2,6 +2,7 @@ import moment from 'moment'
 import { LegacyRef } from 'react'
 
 import { Message } from '@/stores/conversation/conversationSlice'
+import ImageOptimized from '../ImageOptimized'
 
 interface MessageProps {
   message: Message
@@ -27,12 +28,15 @@ function MessageComponent({
         {showUser ? (
           <>
             {message.user.avatar ? (
-              <img
+              <ImageOptimized
                 src={`${import.meta.env.VITE_CDN_URL}/${message.user.id}/${
-                  message.user.avatar
-                }.png`}
+                  message.user.avatar.key
+                }`}
+                blurhash={message.user.avatar.blurhash}
+                width={40}
                 alt='Profile'
-                className='w-10 h-10 rounded-full absolute left-4 mt-1'
+                classNamePosition='w-10 h-10 absolute left-4 mt-1'
+                classNameStyle='rounded-full'
               />
             ) : (
               <div className='w-10 h-10 rounded-full bg-zinc-400 absolute left-4 mt-1' />

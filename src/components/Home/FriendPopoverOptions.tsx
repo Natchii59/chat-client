@@ -4,7 +4,7 @@ import { usePopper } from 'react-popper'
 import { FaEllipsisV } from 'react-icons/fa'
 import { useDispatch } from 'react-redux'
 
-import { User } from '@/stores/auth/authSlice'
+import { User } from '@/stores/user/userSlice'
 import { useRemoveFriendMutation } from '@/stores/friends/friendsApiSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 import { AppDispatch } from '@/stores'

@@ -8,6 +8,7 @@ import { useCancelFriendRequestMutation } from '@/stores/friends/friendsApiSlice
 import { SocketContext } from '@/utils/contexts/SocketContext'
 import { AppDispatch } from '@/stores'
 import { initInformationDialog } from '@/stores/app/appSlice'
+import ImageOptimized from '../ImageOptimized'
 
 function SentRequests() {
   const { socket } = useContext(SocketContext)
@@ -49,12 +50,15 @@ function SentRequests() {
         >
           <div className='flex items-center gap-2'>
             {request.avatar ? (
-              <img
+              <ImageOptimized
                 src={`${import.meta.env.VITE_CDN_URL}/${request.id}/${
-                  request.avatar
-                }.png`}
+                  request.avatar.key
+                }`}
+                blurhash={request.avatar.blurhash}
+                width={40}
                 alt='Profile'
-                className='w-10 h-10 rounded-full'
+                classNamePosition='w-10 h-10'
+                classNameStyle='rounded-full'
               />
             ) : (
               <div className='w-10 h-10 rounded-full bg-zinc-400' />

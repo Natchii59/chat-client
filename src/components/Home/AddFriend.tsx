@@ -4,7 +4,7 @@ import { FaUserPlus } from 'react-icons/fa'
 
 import { useSendFriendRequestMutation } from '@/stores/friends/friendsApiSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
-import { selectUser } from '@/stores/auth/authSlice'
+import { selectUser } from '@/stores/user/userSlice'
 import {
   selectFriends,
   selectReceivedRequests,

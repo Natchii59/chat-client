@@ -1,6 +1,6 @@
 import { apiSlice } from '@/api/apiSlice'
 import { ErrorOutput } from '@/utils/types'
-import { User } from '../auth/authSlice'
+import { User } from '../user/userSlice'
 
 export interface FriendRequestInput {
   id: string
@@ -113,7 +113,10 @@ export const callApiSlice = apiSlice.injectEndpoints({
               SendFriendRequest(username: $username) {
                 id
                 username
-                avatar
+                avatar {
+                  key
+                  blurhash
+                }
               }
             }
           `,

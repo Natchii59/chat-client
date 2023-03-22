@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 import { RootState } from '../index'
-import { User } from '../auth/authSlice'
+import { User } from '../user/userSlice'
 
 export interface Conversation {
   id: string

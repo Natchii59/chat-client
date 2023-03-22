@@ -70,12 +70,18 @@ export const callApiSlice = apiSlice.injectEndpoints({
                 user1 {
                   id
                   username
-                  avatar
+                  avatar {
+                    key
+                    blurhash
+                  }
                 }
                 user2 {
                   id
                   username
-                  avatar
+                  avatar {
+                    key
+                    blurhash
+                  }
                 }
               }
             }
@@ -102,7 +108,10 @@ export const callApiSlice = apiSlice.injectEndpoints({
                   user {
                     id
                     username
-                    avatar
+                    avatar {
+                      key
+                      blurhash
+                    }
                   }
                 }
               }
@@ -125,7 +134,10 @@ export const callApiSlice = apiSlice.injectEndpoints({
                 user {
                   id
                   username
-                  avatar
+                  avatar {
+                    key
+                    blurhash
+                  }
                 }
                 conversation {
                   id

@@ -2,6 +2,7 @@ import { useSelector } from 'react-redux'
 
 import { selectFriends } from '@/stores/friends/friendsSlice'
 import FriendPopoverOptions from './FriendPopoverOptions'
+import ImageOptimized from '../ImageOptimized'
 
 function Friends() {
   const friends = useSelector(selectFriends)
@@ -15,12 +16,15 @@ function Friends() {
         >
           <div className='flex items-center gap-2'>
             {friend.avatar ? (
-              <img
+              <ImageOptimized
                 src={`${import.meta.env.VITE_CDN_URL}/${friend.id}/${
-                  friend.avatar
-                }.png`}
+                  friend.avatar.key
+                }`}
+                blurhash={friend.avatar.blurhash}
+                width={40}
                 alt='Profile'
-                className='w-10 h-10 rounded-full'
+                classNamePosition='w-10 h-10'
+                classNameStyle='rounded-full'
               />
             ) : (
               <div className='w-10 h-10 rounded-full bg-zinc-400' />

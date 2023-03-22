@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { useConversationQuery } from '@/stores/conversation/conversationApiSlice'
-import { selectUser } from '@/stores/auth/authSlice'
+import { selectUser } from '@/stores/user/userSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 import MessageBoxInput from '@/components/Conversation/MessageBoxInput'
 import { AppDispatch } from '@/stores'

@@ -2,7 +2,8 @@ import { useSelector } from 'react-redux'
 import { NavLink } from 'react-router-dom'
 
 import { Conversation } from '@/stores/conversation/conversationSlice'
-import { selectUser } from '@/stores/auth/authSlice'
+import { selectUser } from '@/stores/user/userSlice'
+import ImageOptimized from '../ImageOptimized'
 
 interface SidebarItemProps {
   conversation: Conversation
@@ -28,12 +29,15 @@ function SidebarItem({ conversation }: SidebarItemProps) {
       }
     >
       {otherUser.avatar ? (
-        <img
+        <ImageOptimized
           src={`${import.meta.env.VITE_CDN_URL}/${otherUser.id}/${
-            otherUser.avatar
-          }.png`}
+            otherUser.avatar.key
+          }`}
+          blurhash={otherUser.avatar.blurhash}
+          width={40}
           alt='Profile'
-          className='w-10 h-10 rounded-full absolute left-3 top-1/2 transform -translate-y-1/2'
+          classNamePosition='w-10 h-10 absolute left-3 top-1/2 transform -translate-y-1/2'
+          classNameStyle='rounded-full'
         />
       ) : (
         <div className='w-10 h-10 rounded-full bg-zinc-400 absolute left-3 top-1/2 transform -translate-y-1/2' />
