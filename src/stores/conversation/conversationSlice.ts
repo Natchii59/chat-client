@@ -59,7 +59,7 @@ export const conversationSlice = createSlice({
       state.isTyping = action.payload
     },
     addConversationMessage: (state, action) => {
-      state.messages.push(action.payload)
+      state.messages.splice(0, 0, action.payload)
       state.totalCount = state.totalCount != null ? state.totalCount + 1 : null
     },
     removeConversationMessage: (state, action) => {

@@ -45,7 +45,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
             {hours}
           </p>
         )}
-        <p className='break-words w-full min-w-0 select-text'>
+        <p className='break-words w-full min-w-0 select-text whitespace-pre-line'>
           {message.content}
         </p>
       </div>
