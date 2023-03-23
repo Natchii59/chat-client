@@ -19,7 +19,7 @@ const tabs: ITab[] = [
 
 function Home() {
   return (
-    <div className='p-2'>
+    <div className='p-2 h-full'>
       <Tab.Group>
         <Tab.List className='flex gap-2'>
           {tabs.map(tabItem => (

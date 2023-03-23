@@ -69,7 +69,7 @@ function MessagesList() {
 
   return (
     <div
-      id='scrollableDiv'
+      id='messagesList'
       className='flex-auto w-full overflow-auto flex flex-col-reverse'
     >
       <InfiniteScroll
@@ -78,7 +78,7 @@ function MessagesList() {
         loader={<Loading />}
         inverse={true}
         next={loadMore}
-        scrollableTarget='scrollableDiv'
+        scrollableTarget='messagesList'
         className='flex flex-col-reverse first:mb-4'
       >
         {messages.map((message, index) => (
