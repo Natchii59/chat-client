@@ -28,7 +28,7 @@ function MessagesList() {
   const messages = useSelector(selectConversationMessages)
   const totalCount = useSelector(selectConversationTotalCount)
 
-  const { data: dataMessages } = useConversationMessagesQuery({
+  const { data: dataMessages, isLoading } = useConversationMessagesQuery({
     skip: SKIP,
     take: TAKE,
     where: {
@@ -67,6 +67,8 @@ function MessagesList() {
     setCreatedAt(createdAt)
   }, [messages, totalCount])
 
+  if (isLoading) return <SkeletonLoader />
+
   return (
     <div
       id='messagesList'
@@ -103,6 +105,24 @@ function Loading() {
   return (
     <div className='w-full flex items-center justify-center py-2'>
       <div className='w-1/3 h-1 bg-zinc-400 animate-pulse rounded-full' />
+    </div>
+  )
+}
+
+function SkeletonLoader() {
+  return (
+    <div className='flex-auto w-full overflow-auto flex flex-col-reverse'>
+      {[...Array(20)].map((_, i) => (
+        <div key={i} className='relative w-full'>
+          <div className='w-full py-0.5 pl-18 pr-12 rounded-xl mt-3'>
+            <div className='w-10 h-10 rounded-full bg-zinc-400 absolute left-4 mt-1 animate-pulse' />
+
+            <div className='w-32 h-3 my-2 rounded-full bg-zinc-400 animate-pulse' />
+
+            <div className='w-1/3 h-3 my-2 rounded-full bg-zinc-400 animate-pulse' />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

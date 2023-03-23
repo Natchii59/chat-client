@@ -12,6 +12,9 @@ module.exports = {
       },
       margin: {
         18: '4.5rem'
+      },
+      animation: {
+        bar: 'bar-loader 3s ease-in-out infinite alternate'
       }
     }
   },

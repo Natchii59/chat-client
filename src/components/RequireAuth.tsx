@@ -66,7 +66,14 @@ function RequireAuth() {
     }
   }, [dataAuth, error])
 
-  if (isLoading || !dataAuth?.data) return <></>
+  if (isLoading)
+    return (
+      <div className='w-full h-screen flex justify-center items-center'>
+        <div className='flex flex-col w-1/3 relative'>
+          <div className='h-2 bg-zinc-400 animate-bar absolute rounded-full' />
+        </div>
+      </div>
+    )
 
   return <Outlet />
 }
