@@ -141,11 +141,22 @@ export const callApiSlice = apiSlice.injectEndpoints({
                 }
                 conversation {
                   id
+                  createdAt
                   user1 {
                     id
+                    username
+                    avatar {
+                      key
+                      blurhash
+                    }
                   }
                   user2 {
                     id
+                    username
+                    avatar {
+                      key
+                      blurhash
+                    }
                   }
                 }
               }

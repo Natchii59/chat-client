@@ -5,12 +5,14 @@ import { useDispatch, useSelector } from 'react-redux'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 import { AppDispatch } from '@/stores'
 import {
+  Conversation,
   addConversationMessage,
   selectConversationId,
   setConversationIsTyping
 } from '@/stores/conversation/conversationSlice'
 import { Message } from '@/stores/conversation/conversationSlice'
 import {
+  addConversation,
   addTypingConversation,
   removeTypingConversation,
   updateConversation
@@ -42,10 +44,6 @@ function Socket() {
 
     socket.on('onMessageUpdateSidebar', (message: Message) => {
       dispatch(updateConversation(message))
-
-      // if (payload.user.id !== currentUser?.id) {
-      //   showNotification()
-      // }
     })
 
     socket.on('onTypingStart', () => {
@@ -104,8 +102,13 @@ function Socket() {
       dispatch(removeFriend(userId))
     })
 
+    socket.on('onConversationCreated', (conversation: Conversation) => {
+      dispatch(addConversation(conversation))
+    })
+
     return () => {
       socket.off('onMessage')
+      socket.off('onMessageUpdateSidebar')
       socket.off('onTypingStart')
       socket.off('onTypingStop')
       socket.off('userLeave')
@@ -117,6 +120,7 @@ function Socket() {
       socket.off('onFriendRequestSentReceived')
       socket.off('onFriendRequestSentSended')
       socket.off('onFriendRemoved')
+      socket.off('onConversationCreated')
     }
   }, [socket, dispatch, currentConversationId, receivedRequests, sentRequests])
 

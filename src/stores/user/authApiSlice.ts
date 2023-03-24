@@ -12,6 +12,7 @@ avatar {
 }
 conversations {
   id
+  createdAt
   user1 {
     id
     username

@@ -1,23 +1,17 @@
-import { useContext, useState } from 'react'
+import { useState } from 'react'
 import { Popover } from '@headlessui/react'
 import { usePopper } from 'react-popper'
 import { FaEllipsisV } from 'react-icons/fa'
-import { useDispatch } from 'react-redux'
-
-import { User } from '@/stores/user/userSlice'
-import { useRemoveFriendMutation } from '@/stores/friends/friendsApiSlice'
-import { SocketContext } from '@/utils/contexts/SocketContext'
+import { useCloseConversationMutation } from '@/stores/conversations/conversationsApiSlice'
+import { useDispatch, useSelector } from 'react-redux'
+import { selectConversationId } from '@/stores/conversation/conversationSlice'
 import { AppDispatch } from '@/stores'
 import { initInformationDialog } from '@/stores/app/appSlice'
+import { removeConversation } from '@/stores/conversations/conversationsSlice'
+import { useNavigate } from 'react-router-dom'
 
-interface FriendPopoverOptionsProps {
-  friend: User
-}
-
-function FriendPopoverOptions({ friend }: FriendPopoverOptionsProps) {
-  const { socket } = useContext(SocketContext)
-
-  const dispatch = useDispatch<AppDispatch>()
+function ConversationPopoverOptions() {
+  const navigate = useNavigate()
 
   const [referenceElement, setReferenceElement] = useState<any>()
   const [popperElement, setPopperElement] = useState<any>()
@@ -34,10 +28,18 @@ function FriendPopoverOptions({ friend }: FriendPopoverOptionsProps) {
     ]
   })
 
-  const [removeFriend, { isLoading }] = useRemoveFriendMutation()
+  const conversationId = useSelector(selectConversationId)
 
-  const removeFriendHandle = async () => {
-    const { data, errors } = await removeFriend({ id: friend.id }).unwrap()
+  const dispatch = useDispatch<AppDispatch>()
+
+  const [closeConversation, { isLoading }] = useCloseConversationMutation()
+
+  const closeConversationHandle = async () => {
+    if (!conversationId) return
+
+    const { data, errors } = await closeConversation({
+      id: conversationId
+    }).unwrap()
 
     if (errors) {
       const message = Array.isArray(errors[0].message)
@@ -53,7 +55,10 @@ function FriendPopoverOptions({ friend }: FriendPopoverOptionsProps) {
       return
     }
 
-    socket.emit('removeFriend', { userId: data.RemoveFriend.id })
+    if (data.CloseConversation) {
+      dispatch(removeConversation(data.CloseConversation.id))
+      navigate('/')
+    }
   }
 
   return (
@@ -72,15 +77,15 @@ function FriendPopoverOptions({ friend }: FriendPopoverOptionsProps) {
         className='z-20 bg-zinc-100 dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-xl shadow-md px-2 py-1.5 w-screen max-w-max'
       >
         <button
-          onClick={removeFriendHandle}
+          onClick={closeConversationHandle}
           disabled={isLoading}
-          className='text-sm font-medium py-1.5 px-2 text-red-500 hover:bg-red-500 hover:text-zinc-50 rounded-lg'
+          className='text-sm font-medium py-1.5 px-2 text-red-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg'
         >
-          Remove this friend
+          Close conversation
         </button>
       </Popover.Panel>
     </Popover>
   )
 }
 
-export default FriendPopoverOptions
+export default ConversationPopoverOptions

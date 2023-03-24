@@ -17,6 +17,7 @@ import {
 } from '@/stores/conversation/conversationSlice'
 import { removeTypingConversation } from '@/stores/conversations/conversationsSlice'
 import MessagesList from '@/components/Conversation/MessagesList'
+import ConversationPopoverOptions from '@/components/Conversation/ConversationPopoverOptions'
 
 function Conversation() {
   const { id } = useParams()
@@ -77,8 +78,10 @@ function Conversation() {
 
   return (
     <div className='flex flex-col items-start h-screen p-2'>
-      <div className='w-full px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center'>
+      <div className='w-full px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-between'>
         <p className='text-lg font-extrabold'>{userConversation?.username}</p>
+
+        <ConversationPopoverOptions />
       </div>
 
       <MessagesList />

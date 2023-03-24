@@ -7,7 +7,7 @@ function ConversationsList() {
   const conversations = useSelector(selectConversations)
 
   return (
-    <div className='flex-auto w-full overflow-auto flex flex-col gap1 p-2'>
+    <div className='flex-auto w-full overflow-auto flex flex-col gap-1 p-2'>
       {conversations.length ? (
         conversations.map(conversation => (
           <SidebarItem key={conversation.id} conversation={conversation} />
@@ -18,7 +18,7 @@ function ConversationsList() {
 
           <p className='text-center text-gray-500'>
             You can start a conversation by clicking on the{' '}
-            <span className='font-bold'>New conversation</span> button.
+            <span className='font-black text-xl leading-none'>+</span> button.
           </p>
         </div>
       )}

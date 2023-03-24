@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
+import orderBy from 'lodash/orderBy'
 
 import { RootState } from '../index'
 import { Conversation } from '../conversation/conversationSlice'
@@ -19,7 +20,20 @@ export const conversationsSlice = createSlice({
       state.conversations = action.payload
     },
     addConversation: (state, action) => {
-      state.conversations.push(action.payload)
+      state.conversations = [action.payload, ...state.conversations]
+    },
+    addConversationWithSort: (state, action) => {
+      state.conversations = orderBy(
+        [action.payload, ...state.conversations],
+        (conversation: Conversation) => {
+          if (conversation.lastMessage) {
+            return conversation.lastMessage.createdAt
+          }
+
+          return conversation.createdAt
+        },
+        'desc'
+      )
     },
     removeConversation: (state, action) => {
       state.conversations = state.conversations.filter(
@@ -43,20 +57,15 @@ export const conversationsSlice = createSlice({
       }
     },
     updateConversation: (state, action) => {
-      const conversation = state.conversations.find(
-        conversation => conversation.id === action.payload.conversation.id
-      )
-
-      if (conversation)
-        state.conversations = [
-          {
-            ...conversation,
-            lastMessage: action.payload
-          } as Conversation,
-          ...state.conversations.filter(
-            conversation => conversation.id !== action.payload.conversation.id
-          )
-        ]
+      state.conversations = [
+        {
+          ...action.payload.conversation,
+          lastMessage: action.payload
+        },
+        ...state.conversations.filter(
+          conversation => conversation.id !== action.payload.conversation.id
+        )
+      ]
     }
   }
 })
@@ -64,6 +73,7 @@ export const conversationsSlice = createSlice({
 export const {
   setConversations,
   addConversation,
+  addConversationWithSort,
   removeConversation,
   addTypingConversation,
   removeTypingConversation,
