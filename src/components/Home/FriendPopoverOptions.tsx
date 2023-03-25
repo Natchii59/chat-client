@@ -73,12 +73,12 @@ function FriendPopoverOptions({ friend }: FriendPopoverOptionsProps) {
         ref={setPopperElement}
         style={styles.popper}
         {...attributes.popper}
-        className='z-20 bg-zinc-100 dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-xl shadow-md px-2 py-1.5 w-screen max-w-max'
+        className='z-20 bg-zinc-100 dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-xl shadow-md p-1 w-screen max-w-max'
       >
         <button
           onClick={removeFriendHandle}
           disabled={isLoading}
-          className='text-sm font-medium py-1.5 px-2 text-red-500 hover:bg-red-500 hover:text-zinc-50 rounded-lg'
+          className='text-sm font-medium py-1.5 px-2 text-red-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg'
         >
           Remove this friend
         </button>

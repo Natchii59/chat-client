@@ -2,6 +2,8 @@ import moment from 'moment'
 
 import { Message } from '@/stores/conversation/conversationSlice'
 import ImageOptimized from '../ImageOptimized'
+import { useState } from 'react'
+import MessageContextMenu from './MessageContextMenu'
 
 interface MessageProps {
   message: Message
@@ -9,15 +11,42 @@ interface MessageProps {
 }
 
 function MessageComponent({ message, showUser }: MessageProps) {
+  const [showContextMenu, setShowContextMenu] = useState<boolean>(false)
+  const [target, setTarget] = useState<any | null>(null)
+
   const date = moment(message.createdAt).calendar()
   const hours = moment(message.createdAt).format('HH:mm')
+
+  const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setTarget({
+      getBoundingClientRect: () => {
+        return {
+          x: e.clientX,
+          y: e.clientY,
+          width: 0,
+          height: 0,
+          top: e.clientY,
+          right: e.clientX,
+          bottom: e.clientY,
+          left: e.clientX
+        }
+      }
+    })
+    setShowContextMenu(true)
+  }
+
+  const handleHide = () => {
+    setShowContextMenu(false)
+  }
 
   return (
     <div className='relative w-full'>
       <div
+        onContextMenu={handleContextMenu}
         className={`w-full py-0.5 pl-18 pr-12 hover:bg-zinc-100 hover:dark:bg-zinc-800/30 rounded-xl group ${
           showUser && 'mt-4'
-        }`}
+        } ${showContextMenu && 'bg-zinc-100 dark:bg-zinc-800/30'}`}
       >
         {showUser ? (
           <>
@@ -49,6 +78,13 @@ function MessageComponent({ message, showUser }: MessageProps) {
           {message.content}
         </p>
       </div>
+
+      <MessageContextMenu
+        target={target}
+        show={showContextMenu}
+        onHide={handleHide}
+        messageId={message.id}
+      />
     </div>
   )
 }

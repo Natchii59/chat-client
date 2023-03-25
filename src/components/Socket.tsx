@@ -7,6 +7,7 @@ import { AppDispatch } from '@/stores'
 import {
   Conversation,
   addConversationMessage,
+  removeConversationMessage,
   selectConversationId,
   setConversationIsTyping
 } from '@/stores/conversation/conversationSlice'
@@ -15,7 +16,8 @@ import {
   addConversation,
   addTypingConversation,
   removeTypingConversation,
-  updateConversation
+  updateConversationWithDeletedMessage,
+  updateConversationWithNewMessage
 } from '@/stores/conversations/conversationsSlice'
 import {
   addFriend,
@@ -38,12 +40,12 @@ function Socket() {
   const sentRequests = useSelector(selectSentRequests)
 
   useEffect(() => {
-    socket.on('onMessage', (message: Message) => {
+    socket.on('onMessageCreated', (message: Message) => {
       dispatch(addConversationMessage(message))
     })
 
-    socket.on('onMessageUpdateSidebar', (message: Message) => {
-      dispatch(updateConversation(message))
+    socket.on('onMessageCreatedSidebar', (message: Message) => {
+      dispatch(updateConversationWithNewMessage(message))
     })
 
     socket.on('onTypingStart', () => {
@@ -106,8 +108,24 @@ function Socket() {
       dispatch(addConversation(conversation))
     })
 
+    socket.on('onMessageDeleted', ({ messageId }) => {
+      dispatch(removeConversationMessage(messageId))
+    })
+
+    socket.on(
+      'onMessageDeletedSidebar',
+      ({ conversationId, newLastMessage }) => {
+        dispatch(
+          updateConversationWithDeletedMessage({
+            conversationId,
+            newLastMessage
+          })
+        )
+      }
+    )
+
     return () => {
-      socket.off('onMessage')
+      socket.off('onMessageCreated')
       socket.off('onMessageUpdateSidebar')
       socket.off('onTypingStart')
       socket.off('onTypingStop')
@@ -121,6 +139,8 @@ function Socket() {
       socket.off('onFriendRequestSentSended')
       socket.off('onFriendRemoved')
       socket.off('onConversationCreated')
+      socket.off('onMessageDeleted')
+      socket.off('onMessageDeletedSidebar')
     }
   }, [socket, dispatch, currentConversationId, receivedRequests, sentRequests])
 

@@ -21,6 +21,118 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   headlessuiMode?: HeadlessuiMode
 }
 
+const getHeadlessuiModeClassName = (mode: HeadlessuiMode): string[] => {
+  switch (mode) {
+    case 'open':
+      return [
+        'ui-open:transform',
+        'ui-open:translate-y-1',
+        'ui-open:shadow-none'
+      ]
+    case 'checked':
+      return [
+        'ui-checked:transform',
+        'ui-checked:translate-y-1',
+        'ui-checked:shadow-none'
+      ]
+    case 'selected':
+      return [
+        'ui-selected:transform',
+        'ui-selected:translate-y-1',
+        'ui-selected:shadow-none'
+      ]
+    case 'active':
+      return [
+        'ui-active:transform',
+        'ui-active:translate-y-1',
+        'ui-active:shadow-none'
+      ]
+    case 'disabled':
+      return [
+        'ui-disabled:transform',
+        'ui-disabled:translate-y-1',
+        'ui-disabled:shadow-none'
+      ]
+    default:
+      return []
+  }
+}
+
+const getHeadlessuiModeColorClassName = (
+  mode: HeadlessuiMode,
+  type?: ButtonType
+): string[] => {
+  switch (mode) {
+    case 'open':
+      switch (type) {
+        case 'primary':
+          return ['ui-open:bg-blue-450']
+        case 'secondary':
+          return ['ui-open:bg-zinc-200', 'dark:ui-open:bg-zinc-700']
+        case 'success':
+          return ['ui-open:bg-green-450']
+        case 'danger':
+          return ['ui-open:bg-red-450']
+        default:
+          return ['ui-open:bg-zinc-200', 'dark:ui-open:bg-zinc-700']
+      }
+    case 'checked':
+      switch (type) {
+        case 'primary':
+          return ['ui-checked:bg-blue-450']
+        case 'secondary':
+          return ['ui-checked:bg-zinc-200', 'dark:ui-checked:bg-zinc-700']
+        case 'success':
+          return ['ui-checked:bg-green-450']
+        case 'danger':
+          return ['ui-checked:bg-red-450']
+        default:
+          return ['ui-checked:bg-zinc-200', 'dark:ui-checked:bg-zinc-700']
+      }
+    case 'selected':
+      switch (type) {
+        case 'primary':
+          return ['ui-selected:bg-blue-450']
+        case 'secondary':
+          return ['ui-selected:bg-zinc-200', 'dark:ui-selected:bg-zinc-700']
+        case 'success':
+          return ['ui-selected:bg-green-450']
+        case 'danger':
+          return ['ui-selected:bg-red-450']
+        default:
+          return ['ui-selected:bg-zinc-200', 'dark:ui-selected:bg-zinc-700']
+      }
+    case 'active':
+      switch (type) {
+        case 'primary':
+          return ['ui-active:bg-blue-450']
+        case 'secondary':
+          return ['ui-active:bg-zinc-200', 'dark:ui-active:bg-zinc-700']
+        case 'success':
+          return ['ui-active:bg-green-450']
+        case 'danger':
+          return ['ui-active:bg-red-450']
+        default:
+          return ['ui-active:bg-zinc-200', 'dark:ui-active:bg-zinc-700']
+      }
+    case 'disabled':
+      switch (type) {
+        case 'primary':
+          return ['ui-disabled:bg-blue-400']
+        case 'secondary':
+          return ['ui-disabled:bg-zinc-100', 'dark:ui-disabled:bg-zinc-800']
+        case 'success':
+          return ['ui-disabled:bg-green-400']
+        case 'danger':
+          return ['ui-disabled:bg-red-400']
+        default:
+          return ['ui-disabled:bg-zinc-100', 'dark:ui-disabled:bg-zinc-800']
+      }
+    default:
+      return []
+  }
+}
+
 const Button = React.forwardRef(
   (
     {
@@ -186,27 +298,10 @@ const Button = React.forwardRef(
       if (widthFull) customClassName.push('w-full')
 
       if (headlessuiMode) {
-        customClassName.push(`ui-${headlessuiMode}:transform`)
-        customClassName.push(`ui-${headlessuiMode}:translate-y-1`)
-        customClassName.push(`ui-${headlessuiMode}:shadow-none`)
-        switch (buttonType) {
-          case `primary`:
-            customClassName.push(`ui-${headlessuiMode}:bg-blue-450`)
-            break
-          case `secondary`:
-            customClassName.push(`ui-${headlessuiMode}:bg-zinc-200`)
-            customClassName.push(`dark:ui-${headlessuiMode}:bg-zinc-700`)
-            break
-          case `success`:
-            customClassName.push(`ui-${headlessuiMode}:bg-green-450`)
-            break
-          case `danger`:
-            customClassName.push(`ui-${headlessuiMode}:bg-red-450`)
-            break
-          default:
-            customClassName.push(`ui-${headlessuiMode}:bg-zinc-200`)
-            customClassName.push(`dark:ui-${headlessuiMode}:bg-zinc-700`)
-        }
+        customClassName.push(...getHeadlessuiModeClassName(headlessuiMode))
+        customClassName.push(
+          ...getHeadlessuiModeColorClassName(headlessuiMode, buttonType)
+        )
       }
 
       if (className) customClassName.push(...className.split(/[\s,]+/))

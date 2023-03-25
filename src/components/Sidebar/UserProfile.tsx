@@ -71,18 +71,18 @@ function UserProfile() {
           ref={setPopperElement}
           style={styles.popper}
           {...attributes.popper}
-          className='absolute z-20 w-full px-2 py-1.5 bg-zinc-100 dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-xl flex flex-col gap-1'
+          className='absolute z-20 w-full p-1 bg-zinc-100 dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-xl flex flex-col gap-1'
         >
           <Link
             to='/settings'
-            className='w-full px-3 py-2 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700'
+            className='w-full px-3 py-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700'
           >
             Settings
           </Link>
 
           <button
             onClick={logoutHandle}
-            className='w-full px-3 py-2 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 text-red-500 text-left'
+            className='w-full px-3 py-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 text-red-500 text-left'
           >
             Logout
           </button>

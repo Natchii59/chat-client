@@ -30,6 +30,10 @@ export interface CreateMessageInput {
   conversationId: string
 }
 
+export interface DeleteMessageInput {
+  id: string
+}
+
 export interface FindOneConversationOutput {
   errors: ErrorOutput[] | null
   data: {
@@ -51,6 +55,13 @@ export interface CreateMessageOutput {
   errors: ErrorOutput[] | null
   data: {
     CreateMessage: Message
+  }
+}
+
+export interface DeleteMessageOutput {
+  errors: ErrorOutput[] | null
+  data: {
+    DeleteMessage: string
   }
 }
 
@@ -167,6 +178,19 @@ export const callApiSlice = apiSlice.injectEndpoints({
           }
         }
       })
+    }),
+    deleteMessage: builder.mutation<DeleteMessageOutput, DeleteMessageInput>({
+      query: payload => ({
+        url: '',
+        body: {
+          query: `
+            mutation($id: ID!) {
+              DeleteMessage(id: $id)
+            }
+          `,
+          variables: payload
+        }
+      })
     })
   })
 })
@@ -174,5 +198,6 @@ export const callApiSlice = apiSlice.injectEndpoints({
 export const {
   useConversationQuery,
   useConversationMessagesQuery,
-  useCreateMessageMutation
+  useCreateMessageMutation,
+  useDeleteMessageMutation
 } = callApiSlice

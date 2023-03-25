@@ -56,7 +56,7 @@ export const conversationsSlice = createSlice({
         conversation.isTyping = false
       }
     },
-    updateConversation: (state, action) => {
+    updateConversationWithNewMessage: (state, action) => {
       state.conversations = [
         {
           ...action.payload.conversation,
@@ -66,6 +66,14 @@ export const conversationsSlice = createSlice({
           conversation => conversation.id !== action.payload.conversation.id
         )
       ]
+    },
+    updateConversationWithDeletedMessage: (state, action) => {
+      const conversation = state.conversations.find(
+        conversation => conversation.id === action.payload.conversationId
+      )
+      if (conversation) {
+        conversation.lastMessage = action.payload.newLastMessage
+      }
     }
   }
 })
@@ -77,7 +85,8 @@ export const {
   removeConversation,
   addTypingConversation,
   removeTypingConversation,
-  updateConversation
+  updateConversationWithNewMessage,
+  updateConversationWithDeletedMessage
 } = conversationsSlice.actions
 export default conversationsSlice.reducer
 

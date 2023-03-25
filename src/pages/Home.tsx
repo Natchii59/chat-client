@@ -25,8 +25,8 @@ function Home() {
         <Tab.List className='flex gap-2'>
           {tabs.map(tabItem => (
             <Tab
-              key={tabItem.value}
               as={Button}
+              key={tabItem.value}
               buttonType='secondary'
               buttonSize='sm'
               headlessuiMode='selected'
