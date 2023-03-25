@@ -1,6 +1,6 @@
 import { useContext, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { FaUserPlus } from 'react-icons/fa'
+import { FaSpinner, FaUserPlus } from 'react-icons/fa'
 
 import { useSendFriendRequestMutation } from '@/stores/friends/friendsApiSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
@@ -99,23 +99,33 @@ function AddFriend() {
   return (
     <div className='flex flex-col gap-2'>
       <form onSubmit={sendFriendRequestHandle} className='flex items-stretch'>
-        <input
-          ref={addFriendInputRef}
-          type='text'
-          autoComplete='off'
-          placeholder='Username'
-          required
-          pattern='^[a-z0-9_]{3,}$'
-          className='px-2.5 py-2 w-full text-base bg-zinc-100 dark:bg-zinc-800 rounded-l-xl border-2 border-r-0 focus:outline-none focus:ring-0 peer disabled:cursor-not-allowed focus:invalid:border-red-500 dark:focus:invalid:border-red-500 disabled:opacity-70 border-zinc-300 dark:border-zinc-600 focus:border-blue-500 dark:focus:border-blue-500'
-          value={addFriendUsername}
-          onChange={updateAddFriendUsername}
-          disabled={isLoadingSendFriendRequest}
-        />
+        <div className='relative w-full'>
+          <input
+            ref={addFriendInputRef}
+            type='text'
+            autoComplete='off'
+            placeholder='Username'
+            required
+            pattern='^[a-z0-9_]{3,}$'
+            className={`px-2.5 py-2 w-full text-base bg-zinc-100 dark:bg-zinc-800 rounded-l-xl border-2 border-r-0 focus:outline-none focus:ring-0 peer disabled:cursor-not-allowed focus:invalid:border-red-500 dark:focus:invalid:border-red-500 disabled:opacity-70 border-zinc-300 dark:border-zinc-600 focus:border-blue-500 dark:focus:border-blue-500 ${
+              isLoadingSendFriendRequest ? 'pr-10' : ''
+            }`}
+            value={addFriendUsername}
+            onChange={updateAddFriendUsername}
+            disabled={isLoadingSendFriendRequest}
+          />
+
+          {isLoadingSendFriendRequest ? (
+            <div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
+              <FaSpinner className='animate-spin' />
+            </div>
+          ) : null}
+        </div>
 
         <button
           type='submit'
-          className='font-bold rounded-r-xl border-2 disabled:cursor-not-allowed outline-none flex items-center justify-center bg-blue-400 hover:bg-blue-400/90 focus:bg-blue-400/90 text-zinc-50 border-blue-500 text-sm w-11 h-11'
           disabled={isLoadingSendFriendRequest}
+          className='font-bold rounded-r-xl border-2 disabled:cursor-not-allowed outline-none flex items-center justify-center bg-blue-400 hover:bg-blue-400/90 focus:bg-blue-400/90 text-zinc-50 border-blue-500 text-sm w-11 h-11'
         >
           <FaUserPlus />
         </button>

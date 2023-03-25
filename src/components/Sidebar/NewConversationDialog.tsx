@@ -14,6 +14,7 @@ import { useCreateConversationMutation } from '@/stores/conversations/conversati
 import { AppDispatch } from '@/stores'
 import { initInformationDialog } from '@/stores/app/appSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
+import Button from '../Button'
 
 function NewConversationDialog() {
   const navigate = useNavigate()
@@ -87,13 +88,13 @@ function NewConversationDialog() {
 
   return (
     <>
-      <button
-        type='button'
+      <Button
+        buttonType='primary'
+        buttonSize='sm'
+        square
+        icon={<FaPlus />}
         onClick={openModal}
-        className='font-bold rounded-xl border-2 shadow-[0_4px_0] active:shadow-none active:transform active:translate-y-1 disabled:shadow-none disabled:transform disabled:translate-y-1 disabled:cursor-not-allowed outline-none flex items-center justify-center gap-2 mb-1 bg-blue-400 hover:bg-blue-400/90 focus:bg-blue-400/90 text-zinc-50 border-blue-500 shadow-blue-500 text-sm w-8 h-8'
-      >
-        <FaPlus />
-      </button>
+      />
 
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as='div' className='relative z-10' onClose={closeModal}>
@@ -174,14 +175,17 @@ function NewConversationDialog() {
                   </RadioGroup>
 
                   {friends.length ? (
-                    <button
-                      type='button'
+                    <Button
+                      buttonType='primary'
+                      buttonSize='base'
+                      widthFull
+                      isLoading={isLoading}
+                      disabled={!friendId}
+                      className='mt-4'
                       onClick={createConversationHandle}
-                      disabled={isLoading || !friendId}
-                      className='font-bold rounded-xl border-2 shadow-[0_4px_0] active:shadow-none active:transform active:translate-y-1 disabled:shadow-none disabled:transform disabled:translate-y-1 disabled:cursor-not-allowed outline-none flex items-center justify-center mb-1 bg-blue-400 hover:bg-blue-400/90 focus:bg-blue-400/90 text-zinc-50 border-blue-500 shadow-blue-500 text-base w-full h-12 mt-4'
                     >
                       Start conversation
-                    </button>
+                    </Button>
                   ) : null}
                 </Dialog.Panel>
               </Transition.Child>

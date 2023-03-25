@@ -98,24 +98,22 @@ function ReceivedRequests() {
             <Button
               buttonType='success'
               buttonSize='sm'
-              disabled={
-                isLoadingAcceptFriendRequest || isLoadingDeclineFriendRequest
-              }
+              square
+              icon={<FaUserCheck />}
+              isLoading={isLoadingAcceptFriendRequest}
+              disabled={isLoadingDeclineFriendRequest}
               onClick={() => acceptFriendRequestHandle(request.id)}
-            >
-              <FaUserCheck />
-            </Button>
+            />
 
             <Button
               buttonType='danger'
               buttonSize='sm'
-              disabled={
-                isLoadingAcceptFriendRequest || isLoadingDeclineFriendRequest
-              }
+              square
+              icon={<FaUserTimes />}
+              isLoading={isLoadingDeclineFriendRequest}
+              disabled={isLoadingAcceptFriendRequest}
               onClick={() => declineFriendRequestHandle(request.id)}
-            >
-              <FaUserTimes />
-            </Button>
+            />
           </div>
         </div>
       ))}

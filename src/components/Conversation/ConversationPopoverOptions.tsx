@@ -9,6 +9,7 @@ import { AppDispatch } from '@/stores'
 import { initInformationDialog } from '@/stores/app/appSlice'
 import { removeConversation } from '@/stores/conversations/conversationsSlice'
 import { useNavigate } from 'react-router-dom'
+import Button from '../Button'
 
 function ConversationPopoverOptions() {
   const navigate = useNavigate()
@@ -64,11 +65,14 @@ function ConversationPopoverOptions() {
   return (
     <Popover className='relative'>
       <Popover.Button
+        as={Button}
         ref={setReferenceElement}
-        className='font-bold rounded-xl border-2 shadow-[0_4px_0] active:shadow-none active:transform active:translate-y-1 disabled:shadow-none disabled:transform disabled:translate-y-1 disabled:cursor-not-allowed outline-none mb-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 focus:bg-zinc-200 dark:focus:bg-zinc-700 ui-open:bg-zinc-200 dark:ui-open::bg-zinc-700 text-blue-400 border-zinc-300 dark:border-zinc-600 shadow-zinc-300 dark:shadow-zinc-600 text-sm w-8 h-8 flex items-center justify-center'
-      >
-        <FaEllipsisV />
-      </Popover.Button>
+        buttonType='secondary'
+        buttonSize='sm'
+        square
+        headlessuiMode='open'
+        icon={<FaEllipsisV />}
+      />
 
       <Popover.Panel
         ref={setPopperElement}

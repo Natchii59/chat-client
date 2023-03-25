@@ -94,7 +94,7 @@ function SignUp() {
 
   return (
     <div className='absolute inset-0 flex items-center justify-center max-w-md mx-auto w-full'>
-      <form onSubmit={submitHandle} className='flex flex-col gap-4 w-full'>
+      <form onSubmit={submitHandle} className='space-y-4 w-full'>
         <h1 className='text-3xl font-extrabold'>Create your account</h1>
 
         <InputForm
@@ -136,7 +136,12 @@ function SignUp() {
           error={errors.find(e => e.code === 'confirmPassword')}
         />
 
-        <Button buttonType='primary' type='submit' disabled={isLoading}>
+        <Button
+          type='submit'
+          buttonType='primary'
+          widthFull
+          isLoading={isLoading}
+        >
           Sign up
         </Button>
 

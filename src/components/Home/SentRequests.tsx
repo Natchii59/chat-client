@@ -71,11 +71,11 @@ function SentRequests() {
             <Button
               buttonType='danger'
               buttonSize='sm'
-              disabled={isLoadingCancelFriendRequest}
+              square
+              icon={<FaUserTimes />}
+              isLoading={isLoadingCancelFriendRequest}
               onClick={() => cancelFriendRequestHandle(request.id)}
-            >
-              <FaUserTimes />
-            </Button>
+            />
           </div>
         </div>
       ))}

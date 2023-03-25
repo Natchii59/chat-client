@@ -9,7 +9,7 @@ function Layout() {
         <Sidebar />
       </div>
 
-      <div className='flex-auto'>
+      <div className='flex-auto relative'>
         <Outlet />
       </div>
     </div>
