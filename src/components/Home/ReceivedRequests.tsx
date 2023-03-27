@@ -1,17 +1,17 @@
 import { useContext } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { FaUserCheck, FaUserTimes } from 'react-icons/fa'
+import { useDispatch, useSelector } from 'react-redux'
 
 import Button from '../Button'
-import { selectReceivedRequests } from '@/stores/friends/friendsSlice'
+import ImageOptimized from '../ImageOptimized'
+import { AppDispatch } from '@/stores'
+import { initInformationDialogError } from '@/stores/app/appSlice'
 import {
   useAcceptFriendRequestMutation,
   useDeclineFriendRequestMutation
 } from '@/stores/friends/friendsApiSlice'
+import { selectReceivedRequests } from '@/stores/friends/friendsSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
-import { AppDispatch } from '@/stores'
-import { initInformationDialog } from '@/stores/app/appSlice'
-import ImageOptimized from '../ImageOptimized'
 
 function ReceivedRequests() {
   const { socket } = useContext(SocketContext)
@@ -30,18 +30,11 @@ function ReceivedRequests() {
     const { data, errors } = await acceptFriendRequest({ id }).unwrap()
 
     if (errors) {
-      const message = Array.isArray(errors[0].message)
-        ? errors[0].message[0].message
-        : errors[0].message
-
-      dispatch(
-        initInformationDialog({
-          message: `Error: ${message} Status: ${errors[0].statusCode}. Please try again later.`,
-          type: 'error'
-        })
-      )
+      dispatch(initInformationDialogError(errors))
       return
     }
+
+    if (!data.AcceptFriendRequest) return
 
     socket.emit('acceptFriendRequest', { userId: data.AcceptFriendRequest.id })
   }
@@ -50,18 +43,11 @@ function ReceivedRequests() {
     const { data, errors } = await declineFriendRequest({ id }).unwrap()
 
     if (errors) {
-      const message = Array.isArray(errors[0].message)
-        ? errors[0].message[0].message
-        : errors[0].message
-
-      dispatch(
-        initInformationDialog({
-          message: `Error: ${message} Status: ${errors[0].statusCode}. Please try again later.`,
-          type: 'error'
-        })
-      )
+      dispatch(initInformationDialogError(errors))
       return
     }
+
+    if (!data.DeclineFriendRequest) return
 
     socket.emit('declineFriendRequest', {
       userId: data.DeclineFriendRequest.id

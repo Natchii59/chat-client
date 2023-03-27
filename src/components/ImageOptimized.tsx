@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Blurhash } from 'react-blurhash'
 
 interface ImageOptimizedProps {
@@ -22,8 +22,15 @@ function ImageOptimized({
 }: ImageOptimizedProps) {
   const [loading, setLoading] = useState<boolean>(true)
 
+  const ref = useRef<HTMLImageElement>(null)
+
   const onLoaded = () => {
     setLoading(false)
+  }
+
+  const onError = () => {
+    setLoading(false)
+    if (ref.current) ref.current.src = '/default_profile_picture.webp'
   }
 
   return (
@@ -45,10 +52,12 @@ function ImageOptimized({
           />
         ) : null}
         <img
+          ref={ref}
           src={src}
           alt={alt}
           loading='lazy'
           onLoad={onLoaded}
+          onError={onError}
           width={width}
           height={height ?? width}
           className={`absolute top-0 left-0 z-10 ${classNameStyle}`}

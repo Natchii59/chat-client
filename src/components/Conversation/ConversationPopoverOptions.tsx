@@ -1,18 +1,23 @@
-import { useState } from 'react'
 import { Popover } from '@headlessui/react'
-import { usePopper } from 'react-popper'
+import { useState } from 'react'
 import { FaEllipsisV } from 'react-icons/fa'
-import { useCloseConversationMutation } from '@/stores/conversations/conversationsApiSlice'
+import { usePopper } from 'react-popper'
 import { useDispatch, useSelector } from 'react-redux'
-import { selectConversationId } from '@/stores/conversation/conversationSlice'
-import { AppDispatch } from '@/stores'
-import { initInformationDialog } from '@/stores/app/appSlice'
-import { removeConversation } from '@/stores/conversations/conversationsSlice'
 import { useNavigate } from 'react-router-dom'
+
 import Button from '../Button'
+import { AppDispatch } from '@/stores'
+import { initInformationDialogError } from '@/stores/app/appSlice'
+import { selectConversationId } from '@/stores/conversation/conversationSlice'
+import { useCloseConversationMutation } from '@/stores/conversations/conversationsApiSlice'
+import { removeConversation } from '@/stores/conversations/conversationsSlice'
 
 function ConversationPopoverOptions() {
   const navigate = useNavigate()
+
+  const dispatch = useDispatch<AppDispatch>()
+
+  const conversationId = useSelector(selectConversationId)
 
   const [referenceElement, setReferenceElement] = useState<any>()
   const [popperElement, setPopperElement] = useState<any>()
@@ -29,10 +34,6 @@ function ConversationPopoverOptions() {
     ]
   })
 
-  const conversationId = useSelector(selectConversationId)
-
-  const dispatch = useDispatch<AppDispatch>()
-
   const [closeConversation, { isLoading }] = useCloseConversationMutation()
 
   const closeConversationHandle = async () => {
@@ -43,23 +44,14 @@ function ConversationPopoverOptions() {
     }).unwrap()
 
     if (errors) {
-      const message = Array.isArray(errors[0].message)
-        ? errors[0].message[0].message
-        : errors[0].message
-
-      dispatch(
-        initInformationDialog({
-          message: `Error: ${message} Status: ${errors[0].statusCode}. Please try again later.`,
-          type: 'error'
-        })
-      )
+      dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (data.CloseConversation) {
-      dispatch(removeConversation(data.CloseConversation.id))
-      navigate('/')
-    }
+    if (!data.CloseConversation) return
+
+    dispatch(removeConversation(data.CloseConversation.id))
+    navigate('/')
   }
 
   return (

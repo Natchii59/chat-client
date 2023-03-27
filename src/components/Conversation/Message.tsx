@@ -1,9 +1,11 @@
 import moment from 'moment'
-
-import { Message } from '@/stores/conversation/conversationSlice'
-import ImageOptimized from '../ImageOptimized'
 import { useState } from 'react'
+import { useSelector } from 'react-redux'
+
 import MessageContextMenu from './MessageContextMenu'
+import ImageOptimized from '../ImageOptimized'
+import { selectUser } from '@/stores/user/userSlice'
+import { Message } from '@/utils/graphqlTypes'
 
 interface MessageProps {
   message: Message
@@ -11,6 +13,8 @@ interface MessageProps {
 }
 
 function MessageComponent({ message, showUser }: MessageProps) {
+  const currentUser = useSelector(selectUser)
+
   const [showContextMenu, setShowContextMenu] = useState<boolean>(false)
   const [target, setTarget] = useState<any | null>(null)
 
@@ -50,7 +54,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
       >
         {showUser ? (
           <>
-            {message.user.avatar ? (
+            {message.user?.avatar ? (
               <ImageOptimized
                 src={`${import.meta.env.VITE_CDN_URL}/${message.user.id}/${
                   message.user.avatar.key
@@ -65,7 +69,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
               <div className='w-10 h-10 rounded-full bg-zinc-400 absolute left-4 mt-1' />
             )}
             <h4 className='flex items-baseline gap-2'>
-              <span className='font-bold'>{message.user.username}</span>
+              <span className='font-bold'>{message.user?.username}</span>
               <span className='text-zinc-500 text-sm'>{date}</span>
             </h4>
           </>
@@ -84,6 +88,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
         show={showContextMenu}
         onHide={handleHide}
         messageId={message.id}
+        ownMessage={message.user?.id === currentUser?.id}
       />
     </div>
   )

@@ -1,14 +1,14 @@
 import { useContext } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { FaUserTimes } from 'react-icons/fa'
+import { useDispatch, useSelector } from 'react-redux'
 
 import Button from '../Button'
-import { selectSentRequests } from '@/stores/friends/friendsSlice'
-import { useCancelFriendRequestMutation } from '@/stores/friends/friendsApiSlice'
-import { SocketContext } from '@/utils/contexts/SocketContext'
-import { AppDispatch } from '@/stores'
-import { initInformationDialog } from '@/stores/app/appSlice'
 import ImageOptimized from '../ImageOptimized'
+import { AppDispatch } from '@/stores'
+import { initInformationDialogError } from '@/stores/app/appSlice'
+import { useCancelFriendRequestMutation } from '@/stores/friends/friendsApiSlice'
+import { selectSentRequests } from '@/stores/friends/friendsSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
 
 function SentRequests() {
   const { socket } = useContext(SocketContext)
@@ -24,20 +24,12 @@ function SentRequests() {
     const { data, errors } = await cancelFriendRequest({ id }).unwrap()
 
     if (errors) {
-      const message = Array.isArray(errors[0].message)
-        ? errors[0].message[0].message
-        : errors[0].message
-
-      dispatch(
-        initInformationDialog({
-          message: `Error: ${message} Status: ${errors[0].statusCode}. Please try again later.`,
-          type: 'error'
-        })
-      )
+      dispatch(initInformationDialogError(errors))
       return
     }
 
-    console.log(data)
+    if (!data.CancelFriendRequest) return
+
     socket.emit('cancelFriendRequest', { userId: data.CancelFriendRequest.id })
   }
 

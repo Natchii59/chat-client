@@ -1,41 +1,21 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 
 import { RootState } from '../index'
-import { User } from '../user/userSlice'
-
-export interface Conversation {
-  id: string
-  createdAt: Date
-  updatedAt: Date
-  user1: User
-  user2: User
-  messages: Message[]
-  lastMessage: Message
-  isTyping?: boolean
-}
-
-export interface Message {
-  id: string
-  content: string
-  createdAt: Date
-  updatedAt: Date
-  conversation: Conversation
-  user: User
-}
+import { Message, User } from '@/utils/graphqlTypes'
 
 export interface ConversationState {
-  id: string | null
-  user: User | null
+  id?: string
+  user?: User
   messages: Message[]
-  totalCount: number | null
+  totalCount?: number
   isTyping: boolean
 }
 
 const initialState: ConversationState = {
-  id: null,
-  user: null,
+  id: undefined,
+  user: undefined,
   messages: [],
-  totalCount: null,
+  totalCount: undefined,
   isTyping: false
 }
 
@@ -43,26 +23,45 @@ export const conversationSlice = createSlice({
   name: 'conversation',
   initialState,
   reducers: {
-    setConversationId: (state, action) => {
+    setConversationId: (
+      state,
+      action: PayloadAction<ConversationState['id']>
+    ) => {
       state.id = action.payload
     },
-    setConversationUser: (state, action) => {
+    setConversationUser: (
+      state,
+      action: PayloadAction<ConversationState['user']>
+    ) => {
       state.user = action.payload
     },
-    setConversationMessages: (state, action) => {
+    setConversationMessages: (
+      state,
+      action: PayloadAction<ConversationState['messages']>
+    ) => {
       state.messages = action.payload
     },
-    setConversationTotalCount: (state, action) => {
+    setConversationTotalCount: (
+      state,
+      action: PayloadAction<ConversationState['totalCount']>
+    ) => {
       state.totalCount = action.payload
     },
-    setConversationIsTyping: (state, action) => {
+    setConversationIsTyping: (
+      state,
+      action: PayloadAction<ConversationState['isTyping']>
+    ) => {
       state.isTyping = action.payload
     },
-    addConversationMessage: (state, action) => {
+    addConversationMessage: (state, action: PayloadAction<Message>) => {
       state.messages.splice(0, 0, action.payload)
-      state.totalCount = state.totalCount != null ? state.totalCount + 1 : null
+      state.totalCount =
+        state.totalCount != null ? state.totalCount + 1 : undefined
     },
-    removeConversationMessage: (state, action) => {
+    removeConversationMessage: (
+      state,
+      action: PayloadAction<ConversationState['id']>
+    ) => {
       state.messages = state.messages.filter(
         message => message.id !== action.payload
       )

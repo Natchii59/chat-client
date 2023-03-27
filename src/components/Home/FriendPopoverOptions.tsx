@@ -1,15 +1,15 @@
-import { useContext, useState } from 'react'
 import { Popover } from '@headlessui/react'
-import { usePopper } from 'react-popper'
+import { useContext, useState } from 'react'
 import { FaEllipsisV } from 'react-icons/fa'
+import { usePopper } from 'react-popper'
 import { useDispatch } from 'react-redux'
 
-import { User } from '@/stores/user/userSlice'
+import Button from '../Button'
+import { AppDispatch } from '@/stores'
+import { initInformationDialogError } from '@/stores/app/appSlice'
 import { useRemoveFriendMutation } from '@/stores/friends/friendsApiSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
-import { AppDispatch } from '@/stores'
-import { initInformationDialog } from '@/stores/app/appSlice'
-import Button from '../Button'
+import { User } from '@/utils/graphqlTypes'
 
 interface FriendPopoverOptionsProps {
   friend: User
@@ -41,18 +41,11 @@ function FriendPopoverOptions({ friend }: FriendPopoverOptionsProps) {
     const { data, errors } = await removeFriend({ id: friend.id }).unwrap()
 
     if (errors) {
-      const message = Array.isArray(errors[0].message)
-        ? errors[0].message[0].message
-        : errors[0].message
-
-      dispatch(
-        initInformationDialog({
-          message: `Error: ${message} Status: ${errors[0].statusCode}. Please try again later.`,
-          type: 'error'
-        })
-      )
+      dispatch(initInformationDialogError(errors))
       return
     }
+
+    if (!data.RemoveFriend) return
 
     socket.emit('removeFriend', { userId: data.RemoveFriend.id })
   }

@@ -1,12 +1,12 @@
 import { useContext, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate, useParams } from 'react-router-dom'
 
-import { useConversationQuery } from '@/stores/conversation/conversationApiSlice'
-import { selectUser } from '@/stores/user/userSlice'
-import { SocketContext } from '@/utils/contexts/SocketContext'
-import MessageBoxInput from '@/components/Conversation/MessageBoxInput'
+import ConversationPopoverOptions from '@/components/Conversation/ConversationPopoverOptions'
+import MessageInput from '@/components/Conversation/MessageInput'
+import MessagesList from '@/components/Conversation/MessagesList'
 import { AppDispatch } from '@/stores'
+import { useConversationQuery } from '@/stores/conversation/conversationApiSlice'
 import {
   selectConversationUser,
   setConversationId,
@@ -16,39 +16,46 @@ import {
   setConversationUser
 } from '@/stores/conversation/conversationSlice'
 import { removeTypingConversation } from '@/stores/conversations/conversationsSlice'
-import MessagesList from '@/components/Conversation/MessagesList'
-import ConversationPopoverOptions from '@/components/Conversation/ConversationPopoverOptions'
+import { selectUser } from '@/stores/user/userSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
 
 function Conversation() {
   const { id } = useParams()
 
   const navigate = useNavigate()
 
+  const { socket } = useContext(SocketContext)
+
   const dispatch = useDispatch<AppDispatch>()
 
   const currentUser = useSelector(selectUser)
   const userConversation = useSelector(selectConversationUser)
 
-  const { socket } = useContext(SocketContext)
-
-  const { data: dataConversation, isLoading } = useConversationQuery({
-    id: id ?? ''
-  })
+  const { data: dataConversation, isLoading } = useConversationQuery(
+    {
+      id: id
+    },
+    {
+      skip: !id
+    }
+  )
 
   useEffect(() => {
+    if (!dataConversation?.data.FindOneConversation) return
+
     socket.emit('onConversationJoin', { conversationId: id })
 
     return () => {
       socket.emit('onConversationLeave', { conversationId: id })
     }
-  }, [id])
+  }, [dataConversation])
 
   useEffect(() => {
     if (!dataConversation) return
 
     const { errors, data } = dataConversation
 
-    if (errors?.length || !data?.FindOneConversation) {
+    if (errors?.length || !data.FindOneConversation) {
       navigate('/', { replace: true })
       return
     }
@@ -65,10 +72,10 @@ function Conversation() {
     dispatch(removeTypingConversation(data.FindOneConversation.id))
 
     return () => {
-      dispatch(setConversationId(null))
-      dispatch(setConversationUser(null))
+      dispatch(setConversationId(undefined))
+      dispatch(setConversationUser(undefined))
       dispatch(setConversationMessages([]))
-      dispatch(setConversationTotalCount(null))
+      dispatch(setConversationTotalCount(undefined))
     }
   }, [dataConversation])
 
@@ -86,7 +93,7 @@ function Conversation() {
 
       <MessagesList />
 
-      <MessageBoxInput />
+      <MessageInput />
     </div>
   )
 }

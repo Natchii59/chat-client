@@ -2,35 +2,35 @@ import { useContext, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
-import { selectUser, setUser } from '@/stores/user/userSlice'
-import { AppDispatch } from '@/stores'
-import { useSignInMutation } from '@/stores/user/authApiSlice'
-import { ErrorMessage } from '@/utils/types'
-import { setConversations } from '@/stores/conversations/conversationsSlice'
-import { SocketContext } from '@/utils/contexts/SocketContext'
+import Button from '@/components/Button'
 import InputForm from '@/components/InputForm'
+import { AppDispatch } from '@/stores'
+import { setConversations } from '@/stores/conversations/conversationsSlice'
 import {
   setFriends,
   setReceivedRequests,
   setSentRequests
 } from '@/stores/friends/friendsSlice'
-import Button from '@/components/Button'
+import { useSignInMutation } from '@/stores/user/authApiSlice'
+import { selectUser, setUser } from '@/stores/user/userSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
+import { ErrorMessage } from '@/utils/types'
 
 function SignIn() {
   const location = useLocation()
   const navigate = useNavigate()
+
+  const { socket } = useContext(SocketContext)
+
+  const dispatch = useDispatch<AppDispatch>()
+
+  const currentUser = useSelector(selectUser)
 
   const [username, setUsername] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [errors, setErrors] = useState<ErrorMessage[]>([])
 
   const [signIn, { isLoading }] = useSignInMutation()
-
-  const dispatch = useDispatch<AppDispatch>()
-
-  const currentUser = useSelector(selectUser)
-
-  const { socket } = useContext(SocketContext)
 
   const updateUsername = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value.toLowerCase())
@@ -54,42 +54,38 @@ function SignIn() {
       password
     }).unwrap()
 
-    if (errors) {
-      if ([400, 401].includes(errors[0].statusCode)) {
-        setPassword('')
+    if (errors && errors[0].statusCode === 400) {
+      setPassword('')
 
-        const messages = errors[0].message
-        if (Array.isArray(messages)) {
-          setErrors(messages)
-        } else {
-          setErrors([{ message: messages, code: '' }])
-        }
+      const messages = errors[0].message
+      if (Array.isArray(messages)) {
+        setErrors(messages)
+      } else {
+        setErrors([{ message: messages, code: '' }])
       }
-    } else if (data) {
-      const {
-        conversations,
-        friends,
-        receivedRequests,
-        sentRequests,
-        ...user
-      } = data.SignIn.user
-
-      localStorage.setItem('accessToken', data.SignIn.accessToken)
-      localStorage.setItem('refreshToken', data.SignIn.refreshToken)
-
-      dispatch(setUser(user))
-      dispatch(setConversations(conversations))
-      dispatch(setFriends(friends))
-      dispatch(setReceivedRequests(receivedRequests))
-      dispatch(setSentRequests(sentRequests))
-
-      socket.auth = {
-        token: data.SignIn.accessToken
-      }
-      socket.connect()
-
-      navigate(location.state?.from ?? '/')
     }
+
+    if (!data.SignIn) return
+
+    const { conversations, friends, receivedRequests, sentRequests, ...user } =
+      data.SignIn.user
+
+    localStorage.setItem('accessToken', data.SignIn.accessToken)
+    localStorage.setItem('refreshToken', data.SignIn.refreshToken)
+
+    dispatch(setUser(user))
+
+    if (conversations) dispatch(setConversations(conversations))
+    if (friends) dispatch(setFriends(friends))
+    if (receivedRequests) dispatch(setReceivedRequests(receivedRequests))
+    if (sentRequests) dispatch(setSentRequests(sentRequests))
+
+    socket.auth = {
+      token: data.SignIn.accessToken
+    }
+    socket.connect()
+
+    navigate(location.state?.from ?? '/')
   }
 
   return (

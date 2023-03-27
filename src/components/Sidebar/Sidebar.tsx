@@ -1,9 +1,9 @@
-import { Link, useLocation } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
+import { Link, useLocation } from 'react-router-dom'
 
 import ConversationsList from './ConversationsList'
-import UserProfile from './UserProfile'
 import NewConversationDialog from './NewConversationDialog'
+import UserProfile from './UserProfile'
 
 function Sidebar() {
   const location = useLocation()

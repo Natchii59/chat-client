@@ -1,37 +1,16 @@
 import { apiSlice } from '@/api/apiSlice'
-import { ErrorOutput } from '@/utils/types'
-import { Conversation } from '../conversation/conversationSlice'
+import {
+  Mutation,
+  MutationCloseConversationArgs,
+  MutationCreateConversationArgs
+} from '@/utils/graphqlTypes'
+import { Response } from '@/utils/types'
 
-export interface CreateConversationInput {
-  userId: string
-}
-
-export interface CloseConversationInput {
-  id: string
-}
-
-export interface CreateConversationOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    CreateConversation: {
-      created: boolean
-      conversation: Conversation
-    }
-  }
-}
-
-export interface CloseConversationOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    CloseConversation: Conversation
-  }
-}
-
-export const callApiSlice = apiSlice.injectEndpoints({
+export const conversationsApiSlice = apiSlice.injectEndpoints({
   endpoints: builder => ({
     createConversation: builder.mutation<
-      CreateConversationOutput,
-      CreateConversationInput
+      Response<Mutation['CreateConversation']>,
+      MutationCreateConversationArgs
     >({
       query: payload => ({
         url: '',
@@ -68,15 +47,13 @@ export const callApiSlice = apiSlice.injectEndpoints({
               }
             }
           `,
-          variables: {
-            input: payload
-          }
+          variables: payload
         }
       })
     }),
     closeConversation: builder.mutation<
-      CloseConversationOutput,
-      CloseConversationInput
+      Response<Mutation['CloseConversation']>,
+      MutationCloseConversationArgs
     >({
       query: payload => ({
         url: '',
@@ -96,4 +73,4 @@ export const callApiSlice = apiSlice.injectEndpoints({
 })
 
 export const { useCreateConversationMutation, useCloseConversationMutation } =
-  callApiSlice
+  conversationsApiSlice

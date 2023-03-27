@@ -1,75 +1,19 @@
 import { apiSlice } from '@/api/apiSlice'
-import { ErrorOutput } from '@/utils/types'
-import { Conversation, Message } from './conversationSlice'
+import {
+  Mutation,
+  MutationCreateMessageArgs,
+  MutationDeleteMessageArgs,
+  Query,
+  QueryFindOneConversationArgs,
+  QueryPaginationMessageArgs
+} from '@/utils/graphqlTypes'
+import { Response } from '@/utils/types'
 
-export interface FindOneConversationInput {
-  id: string
-}
-
-export interface PaginationMessageWhere {
-  id?: string
-  createdAt?: Date | string
-  conversationId?: string
-}
-
-export interface PaginationMessageSortBy {
-  id?: 'ASC' | 'DESC'
-  createdAt?: 'ASC' | 'DESC'
-  updatedAt?: 'ASC' | 'DESC'
-}
-
-export interface PaginationMessageInput {
-  skip: number
-  take: number
-  where?: PaginationMessageWhere
-  sortBy?: PaginationMessageSortBy
-}
-
-export interface CreateMessageInput {
-  content: string
-  conversationId: string
-}
-
-export interface DeleteMessageInput {
-  id: string
-}
-
-export interface FindOneConversationOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    FindOneConversation: Conversation
-  } | null
-}
-
-export interface PaginationMessageOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    PaginationMessage: {
-      totalCount: number
-      nodes: Message[]
-    }
-  } | null
-}
-
-export interface CreateMessageOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    CreateMessage: Message
-  }
-}
-
-export interface DeleteMessageOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    DeleteMessage: string
-  }
-}
-
-export const callApiSlice = apiSlice.injectEndpoints({
+export const conversationApiSlice = apiSlice.injectEndpoints({
   endpoints: builder => ({
     conversation: builder.query<
-      FindOneConversationOutput,
-      FindOneConversationInput
+      Response<Query['FindOneConversation']>,
+      QueryFindOneConversationArgs
     >({
       query: payload => ({
         url: '',
@@ -102,8 +46,8 @@ export const callApiSlice = apiSlice.injectEndpoints({
       })
     }),
     conversationMessages: builder.query<
-      PaginationMessageOutput,
-      PaginationMessageInput
+      Response<Query['PaginationMessage']>,
+      QueryPaginationMessageArgs
     >({
       query: payload => ({
         url: '',
@@ -132,7 +76,10 @@ export const callApiSlice = apiSlice.injectEndpoints({
         }
       })
     }),
-    createMessage: builder.mutation<CreateMessageOutput, CreateMessageInput>({
+    createMessage: builder.mutation<
+      Response<Mutation['CreateMessage']>,
+      MutationCreateMessageArgs
+    >({
       query: payload => ({
         url: '',
         body: {
@@ -173,13 +120,14 @@ export const callApiSlice = apiSlice.injectEndpoints({
               }
             }
           `,
-          variables: {
-            input: payload
-          }
+          variables: payload
         }
       })
     }),
-    deleteMessage: builder.mutation<DeleteMessageOutput, DeleteMessageInput>({
+    deleteMessage: builder.mutation<
+      Response<Mutation['DeleteMessage']>,
+      MutationDeleteMessageArgs
+    >({
       query: payload => ({
         url: '',
         body: {
@@ -200,4 +148,4 @@ export const {
   useConversationMessagesQuery,
   useCreateMessageMutation,
   useDeleteMessageMutation
-} = callApiSlice
+} = conversationApiSlice

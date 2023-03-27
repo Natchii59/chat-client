@@ -1,11 +1,11 @@
 import { Tab } from '@headlessui/react'
 import { FaUserPlus } from 'react-icons/fa'
 
+import Button from '@/components/Button'
+import AddFriend from '@/components/Home/AddFriend'
 import Friends from '@/components/Home/Friends'
 import ReceivedRequests from '@/components/Home/ReceivedRequests'
 import SentRequests from '@/components/Home/SentRequests'
-import AddFriend from '@/components/Home/AddFriend'
-import Button from '@/components/Button'
 
 interface ITab {
   name: string

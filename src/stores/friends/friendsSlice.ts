@@ -1,7 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 
 import { RootState } from '../index'
-import { User } from '../user/userSlice'
+import { User } from '@/utils/graphqlTypes'
 
 export interface FriendsState {
   friends: User[]
@@ -19,44 +19,50 @@ export const friendsSlice = createSlice({
   name: 'friends',
   initialState,
   reducers: {
-    setFriends: (state, action) => {
+    setFriends: (state, action: PayloadAction<FriendsState['friends']>) => {
       state.friends = action.payload
     },
-    setReceivedRequests: (state, action) => {
+    setReceivedRequests: (
+      state,
+      action: PayloadAction<FriendsState['receivedRequests']>
+    ) => {
       state.receivedRequests = action.payload
     },
-    setSentRequests: (state, action) => {
+    setSentRequests: (
+      state,
+      action: PayloadAction<FriendsState['sentRequests']>
+    ) => {
       state.sentRequests = action.payload
     },
-    addFriend: (state, action) => {
+    addFriend: (state, action: PayloadAction<User>) => {
       state.friends.push(action.payload)
       state.friends = state.friends.sort((a, b) =>
         a.username.localeCompare(b.username)
       )
     },
-    addReceivedRequest: (state, action) => {
+    addReceivedRequest: (state, action: PayloadAction<User>) => {
       state.receivedRequests.push(action.payload)
       state.receivedRequests = state.receivedRequests.sort((a, b) =>
         a.username.localeCompare(b.username)
       )
     },
-    addSentRequest: (state, action) => {
+    addSentRequest: (state, action: PayloadAction<User>) => {
       state.sentRequests.push(action.payload)
       state.sentRequests = state.sentRequests.sort((a, b) =>
         a.username.localeCompare(b.username)
       )
     },
-    removeFriend: (state, action) => {
+    removeFriend: (state, action: PayloadAction<User['id']>) => {
       state.friends = state.friends.filter(
         friend => friend.id !== action.payload
       )
     },
-    removeReceivedRequest: (state, action) => {
+    removeReceivedRequest: (state, action: PayloadAction<User['id']>) => {
       state.receivedRequests = state.receivedRequests.filter(
         request => request.id !== action.payload
       )
     },
-    removeSentRequest: (state, action) => {
+    removeSentRequest: (state, action: PayloadAction<User['id']>) => {
       state.sentRequests = state.sentRequests.filter(
         request => request.id !== action.payload
       )

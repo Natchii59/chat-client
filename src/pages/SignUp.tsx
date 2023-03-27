@@ -2,18 +2,23 @@ import { useContext, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
-import { selectUser, setUser } from '@/stores/user/userSlice'
+import Button from '@/components/Button'
+import InputForm from '@/components/InputForm'
 import { AppDispatch } from '@/stores'
 import { useSignupMutation } from '@/stores/user/authApiSlice'
-import { ErrorMessage } from '@/utils/types'
-import { setConversations } from '@/stores/conversations/conversationsSlice'
+import { selectUser, setUser } from '@/stores/user/userSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
-import InputForm from '@/components/InputForm'
-import Button from '@/components/Button'
+import { ErrorMessage } from '@/utils/types'
 
 function SignUp() {
   const location = useLocation()
   const navigate = useNavigate()
+
+  const { socket } = useContext(SocketContext)
+
+  const dispatch = useDispatch<AppDispatch>()
+
+  const currentUser = useSelector(selectUser)
 
   const [username, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
@@ -21,12 +26,6 @@ function SignUp() {
   const [errors, setErrors] = useState<ErrorMessage[]>([])
 
   const [signUp, { isLoading }] = useSignupMutation()
-
-  const dispatch = useDispatch<AppDispatch>()
-
-  const currentUser = useSelector(selectUser)
-
-  const { socket } = useContext(SocketContext)
 
   const updateUsername = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value.toLowerCase())
@@ -52,44 +51,43 @@ function SignUp() {
 
     if (password !== confirmPassword) {
       setErrors([
-        { message: 'Password does not match', code: 'confirmPassword' }
+        { message: 'Password does not match.', code: 'confirmPassword' }
       ])
       return
     }
 
     const { data, errors } = await signUp({
-      username,
-      password
+      input: {
+        username,
+        password
+      }
     }).unwrap()
 
-    if (errors) {
-      if ([400, 401].includes(errors[0].statusCode)) {
-        setPassword('')
-        setConfirmPassword('')
+    if (errors && errors[0].statusCode === 400) {
+      setPassword('')
+      setConfirmPassword('')
 
-        const messages = errors[0].message
-        if (Array.isArray(messages)) {
-          setErrors(messages)
-        } else {
-          setErrors([{ message: messages, code: '' }])
-        }
+      const messages = errors[0].message
+      if (Array.isArray(messages)) {
+        setErrors(messages)
+      } else {
+        setErrors([{ message: messages, code: '' }])
       }
-    } else if (data) {
-      const { conversations, ...user } = data.SignUp.user
-
-      localStorage.setItem('accessToken', data.SignUp.accessToken)
-      localStorage.setItem('refreshToken', data.SignUp.refreshToken)
-
-      dispatch(setUser(user))
-      dispatch(setConversations(conversations))
-
-      socket.auth = {
-        token: data.SignUp.accessToken
-      }
-      socket.connect()
-
-      navigate(location.state?.from ?? '/')
     }
+
+    if (!data.SignUp) return
+
+    localStorage.setItem('accessToken', data.SignUp.accessToken)
+    localStorage.setItem('refreshToken', data.SignUp.refreshToken)
+
+    dispatch(setUser(data.SignUp.user))
+
+    socket.auth = {
+      token: data.SignUp.accessToken
+    }
+    socket.connect()
+
+    navigate(location.state?.from ?? '/')
   }
 
   return (
@@ -148,7 +146,7 @@ function SignUp() {
         <p className='text-center'>
           You have already an account?{' '}
           <Link
-            to='/signup'
+            to='/sign-in'
             state={{ from: location.state?.from ?? null }}
             className='text-blue-400 outline-none hover:underline focus:underline'
           >

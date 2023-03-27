@@ -1,109 +1,19 @@
 import { apiSlice } from '@/api/apiSlice'
-import { ErrorOutput } from '@/utils/types'
-import { User } from '../user/userSlice'
+import {
+  Mutation,
+  MutationAcceptFriendRequestArgs,
+  MutationCancelFriendRequestArgs,
+  MutationDeclineFriendRequestArgs,
+  MutationRemoveFriendArgs,
+  MutationSendFriendRequestArgs
+} from '@/utils/graphqlTypes'
+import { Response } from '@/utils/types'
 
-export interface FriendRequestInput {
-  id: string
-}
-
-export interface SendFriendRequestInput {
-  username: string
-}
-
-export interface AcceptFriendRequestOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    AcceptFriendRequest: User
-  }
-}
-
-export interface DeclineFriendRequestOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    DeclineFriendRequest: User
-  }
-}
-
-export interface CancelFriendRequestOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    CancelFriendRequest: User
-  }
-}
-
-export interface SendFriendRequestOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    SendFriendRequest: User
-  }
-}
-
-export interface RemoveFriendOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    RemoveFriend: User
-  }
-}
-
-export const callApiSlice = apiSlice.injectEndpoints({
+export const friendsApiSlice = apiSlice.injectEndpoints({
   endpoints: builder => ({
-    acceptFriendRequest: builder.mutation<
-      AcceptFriendRequestOutput,
-      FriendRequestInput
-    >({
-      query: payload => ({
-        url: '',
-        body: {
-          query: `
-            mutation($id: ID!) {
-              AcceptFriendRequest(id: $id) {
-                id
-              }
-            }
-          `,
-          variables: payload
-        }
-      })
-    }),
-    declineFriendRequest: builder.mutation<
-      DeclineFriendRequestOutput,
-      FriendRequestInput
-    >({
-      query: payload => ({
-        url: '',
-        body: {
-          query: `
-            mutation($id: ID!) {
-              DeclineFriendRequest(id: $id) {
-                id
-              }
-            }
-          `,
-          variables: payload
-        }
-      })
-    }),
-    cancelFriendRequest: builder.mutation<
-      CancelFriendRequestOutput,
-      FriendRequestInput
-    >({
-      query: payload => ({
-        url: '',
-        body: {
-          query: `
-              mutation($id: ID!) {
-                CancelFriendRequest(id: $id) {
-                  id
-                }
-              }
-            `,
-          variables: payload
-        }
-      })
-    }),
     sendFriendRequest: builder.mutation<
-      SendFriendRequestOutput,
-      SendFriendRequestInput
+      Response<Mutation['SendFriendRequest']>,
+      MutationSendFriendRequestArgs
     >({
       query: payload => ({
         url: '',
@@ -124,7 +34,64 @@ export const callApiSlice = apiSlice.injectEndpoints({
         }
       })
     }),
-    removeFriend: builder.mutation<RemoveFriendOutput, FriendRequestInput>({
+    acceptFriendRequest: builder.mutation<
+      Response<Mutation['AcceptFriendRequest']>,
+      MutationAcceptFriendRequestArgs
+    >({
+      query: payload => ({
+        url: '',
+        body: {
+          query: `
+            mutation($id: ID!) {
+              AcceptFriendRequest(id: $id) {
+                id
+              }
+            }
+          `,
+          variables: payload
+        }
+      })
+    }),
+    declineFriendRequest: builder.mutation<
+      Response<Mutation['DeclineFriendRequest']>,
+      MutationDeclineFriendRequestArgs
+    >({
+      query: payload => ({
+        url: '',
+        body: {
+          query: `
+            mutation($id: ID!) {
+              DeclineFriendRequest(id: $id) {
+                id
+              }
+            }
+          `,
+          variables: payload
+        }
+      })
+    }),
+    cancelFriendRequest: builder.mutation<
+      Response<Mutation['CancelFriendRequest']>,
+      MutationCancelFriendRequestArgs
+    >({
+      query: payload => ({
+        url: '',
+        body: {
+          query: `
+              mutation($id: ID!) {
+                CancelFriendRequest(id: $id) {
+                  id
+                }
+              }
+            `,
+          variables: payload
+        }
+      })
+    }),
+    removeFriend: builder.mutation<
+      Response<Mutation['RemoveFriend']>,
+      MutationRemoveFriendArgs
+    >({
       query: payload => ({
         url: '',
         body: {
@@ -148,4 +115,4 @@ export const {
   useCancelFriendRequestMutation,
   useSendFriendRequestMutation,
   useRemoveFriendMutation
-} = callApiSlice
+} = friendsApiSlice

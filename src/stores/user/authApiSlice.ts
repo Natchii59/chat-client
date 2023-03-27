@@ -1,6 +1,11 @@
 import { apiSlice } from '@/api/apiSlice'
-import { User } from './userSlice'
-import { ErrorOutput } from '@/utils/types'
+import {
+  Mutation,
+  MutationSignInArgs,
+  MutationSignUpArgs,
+  Query
+} from '@/utils/graphqlTypes'
+import { Response } from '@/utils/types'
 
 const userFieldOutput = `
 id
@@ -61,48 +66,9 @@ sentRequests {
 }
 `
 
-export interface SignInInput {
-  username: string
-  password: string
-}
-
-export interface SignUpInput {
-  username: string
-  password: string
-}
-
-export interface SignInOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    SignIn: {
-      accessToken: string
-      refreshToken: string
-      user: User
-    }
-  } | null
-}
-
-export interface SignUpOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    SignUp: {
-      accessToken: string
-      refreshToken: string
-      user: User
-    }
-  }
-}
-
-export interface AuthenticateOutput {
-  errors: ErrorOutput[] | null
-  data: {
-    Profile: User
-  } | null
-}
-
 export const authApiSlice = apiSlice.injectEndpoints({
   endpoints: builder => ({
-    authenticate: builder.query<AuthenticateOutput, void>({
+    authenticate: builder.query<Response<Query['Profile']>, void>({
       query: () => ({
         url: '',
         body: {
@@ -116,7 +82,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
         }
       })
     }),
-    signIn: builder.mutation<SignInOutput, SignInInput>({
+    signIn: builder.mutation<Response<Mutation['SignIn']>, MutationSignInArgs>({
       query: payload => ({
         url: '',
         body: {
@@ -135,7 +101,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
         }
       })
     }),
-    signup: builder.mutation<SignUpOutput, SignUpInput>({
+    signup: builder.mutation<Response<Mutation['SignUp']>, MutationSignUpArgs>({
       query: payload => ({
         url: '',
         body: {
@@ -145,14 +111,18 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 accessToken
                 refreshToken
                 user {
-                  ${userFieldOutput}
+                  id
+                  username
+                  createdAt
+                  avatar {
+                    key
+                    blurhash
+                  }
                 }
               }
             }
           `,
-          variables: {
-            input: payload
-          }
+          variables: payload
         }
       })
     })

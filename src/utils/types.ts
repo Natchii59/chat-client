@@ -1,10 +1,18 @@
-export interface ErrorMessage {
+export type ErrorMessage = {
   message?: string
   code: string
 }
 
-export interface ErrorOutput {
+export type ErrorType = {
   statusCode: number
   message: string | ErrorMessage[]
   error?: string
+  path?: string[]
+}
+
+export type Response<T> = {
+  data: {
+    [key: string]: T
+  }
+  errors?: ErrorType[]
 }

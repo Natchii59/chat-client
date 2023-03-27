@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
 import moment from 'moment'
+import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
+import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 
-import { useConversationMessagesQuery } from '@/stores/conversation/conversationApiSlice'
+import MessageComponent from './Message'
 import { AppDispatch } from '@/stores'
+import { useConversationMessagesQuery } from '@/stores/conversation/conversationApiSlice'
 import {
   selectConversationId,
   selectConversationMessages,
@@ -13,14 +14,10 @@ import {
   setConversationMessages,
   setConversationTotalCount
 } from '@/stores/conversation/conversationSlice'
-import MessageComponent from './Message'
+import { SortDirection } from '@/utils/graphqlTypes'
 
 function MessagesList() {
   const navigate = useNavigate()
-
-  const TAKE = 50
-  const SKIP = 0
-  const [createdAt, setCreatedAt] = useState<Date | undefined>(undefined)
 
   const dispatch = useDispatch<AppDispatch>()
 
@@ -28,24 +25,43 @@ function MessagesList() {
   const messages = useSelector(selectConversationMessages)
   const totalCount = useSelector(selectConversationTotalCount)
 
-  const { data: dataMessages, isLoading } = useConversationMessagesQuery({
-    skip: SKIP,
-    take: TAKE,
-    where: {
-      conversationId: conversationId ?? '',
-      createdAt
+  const TAKE = 50
+  const SKIP = 0
+  const [createdAt, setCreatedAt] = useState<Date | undefined>(undefined)
+
+  const { data: dataMessages, isLoading } = useConversationMessagesQuery(
+    {
+      skip: SKIP,
+      take: TAKE,
+      where: [
+        {
+          conversationId: conversationId,
+          createdAt
+        }
+      ],
+      sortBy: {
+        createdAt: SortDirection.Desc
+      }
     },
-    sortBy: {
-      createdAt: 'DESC'
+    {
+      skip: !conversationId
     }
-  })
+  )
+
+  const loadMore = useCallback(() => {
+    if (totalCount && messages.length >= totalCount) return
+
+    const { createdAt } = messages[messages.length - 1]
+
+    setCreatedAt(createdAt)
+  }, [messages, totalCount])
 
   useEffect(() => {
     if (!dataMessages) return
 
     const { errors, data } = dataMessages
 
-    if (errors?.length || !data?.PaginationMessage) {
+    if (errors?.length || !data.PaginationMessage) {
       navigate('/', { replace: true })
       return
     }
@@ -59,14 +75,6 @@ function MessagesList() {
     dispatch(setConversationMessages(messagesFetched))
   }, [dataMessages])
 
-  const loadMore = useCallback(() => {
-    if (totalCount && messages.length >= totalCount) return
-
-    const { createdAt } = messages[messages.length - 1]
-
-    setCreatedAt(createdAt)
-  }, [messages, totalCount])
-
   if (isLoading) return <SkeletonLoader />
 
   return (
@@ -76,7 +84,7 @@ function MessagesList() {
     >
       <InfiniteScroll
         dataLength={messages.length}
-        hasMore={totalCount !== null && totalCount > messages.length}
+        hasMore={totalCount !== undefined && totalCount > messages.length}
         loader={<Loading />}
         inverse={true}
         next={loadMore}
@@ -88,7 +96,7 @@ function MessagesList() {
             key={message.id}
             message={message}
             showUser={
-              message.user.id !== messages[index + 1]?.user.id ||
+              message.user?.id !== messages[index + 1]?.user?.id ||
               moment(message.createdAt).diff(
                 moment(messages[index + 1]?.createdAt),
                 'minutes'

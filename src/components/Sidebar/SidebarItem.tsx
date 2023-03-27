@@ -1,12 +1,12 @@
 import { useSelector } from 'react-redux'
 import { NavLink } from 'react-router-dom'
 
-import { Conversation } from '@/stores/conversation/conversationSlice'
-import { selectUser } from '@/stores/user/userSlice'
 import ImageOptimized from '../ImageOptimized'
+import { ConversationType } from '@/stores/conversations/conversationsSlice'
+import { selectUser } from '@/stores/user/userSlice'
 
 interface SidebarItemProps {
-  conversation: Conversation
+  conversation: ConversationType
 }
 
 function SidebarItem({ conversation }: SidebarItemProps) {

@@ -1,28 +1,31 @@
 import { useContext, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
 import { FaSpinner, FaUserPlus } from 'react-icons/fa'
+import { useDispatch, useSelector } from 'react-redux'
 
+import { AppDispatch } from '@/stores'
+import { initInformationDialogError } from '@/stores/app/appSlice'
 import { useSendFriendRequestMutation } from '@/stores/friends/friendsApiSlice'
-import { SocketContext } from '@/utils/contexts/SocketContext'
-import { selectUser } from '@/stores/user/userSlice'
 import {
   selectFriends,
   selectReceivedRequests,
   selectSentRequests
 } from '@/stores/friends/friendsSlice'
+import { selectUser } from '@/stores/user/userSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
 
 function AddFriend() {
   const { socket } = useContext(SocketContext)
 
-  const currentUser = useSelector(selectUser)
+  const dispatch = useDispatch<AppDispatch>()
 
+  const currentUser = useSelector(selectUser)
   const friends = useSelector(selectFriends)
   const receivedRequests = useSelector(selectReceivedRequests)
   const sentRequests = useSelector(selectSentRequests)
 
   const [addFriendUsername, setAddFriendUsername] = useState<string>('')
-  const [addFriendError, setAddFriendError] = useState<string>('')
   const [addFriendSuccess, setAddFriendSuccess] = useState<string>('')
+  const [addFriendError, setAddFriendError] = useState<string>('')
 
   const [timer, setTimer] = useState<ReturnType<typeof setTimeout>>()
 
@@ -59,35 +62,38 @@ function AddFriend() {
     }).unwrap()
 
     if (errors) {
-      const error = errors[0]
-      if (Array.isArray(error.message)) {
-        setAddFriendError(error.message[0].message ?? '')
+      if ([400, 404].includes(errors[0].statusCode)) {
+        const { message } = errors[0]
+
+        if (Array.isArray(message)) {
+          setAddFriendError(message[0].message ?? '')
+        } else {
+          setAddFriendError(message)
+        }
+        addFriendInputRef.current?.focus()
       } else {
-        setAddFriendError(error.message)
+        dispatch(initInformationDialogError(errors))
+        return
       }
-      return
     }
 
-    if (!data.SendFriendRequest) {
-      setAddFriendError('User not found')
-      addFriendInputRef.current?.focus()
-    } else {
-      clearTimeout(timer)
+    if (!data?.SendFriendRequest) return
 
-      setAddFriendSuccess(
-        `Friend request sent to ${data.SendFriendRequest.username}`
-      )
-      setAddFriendUsername('')
-      socket.emit('sendFriendRequest', {
-        user: data.SendFriendRequest
-      })
+    clearTimeout(timer)
 
-      setTimer(
-        setTimeout(() => {
-          setAddFriendSuccess('')
-        }, 5000)
-      )
-    }
+    setAddFriendSuccess(
+      `Friend request sent to ${data.SendFriendRequest.username}`
+    )
+    setAddFriendUsername('')
+    socket.emit('sendFriendRequest', {
+      user: data.SendFriendRequest
+    })
+
+    setTimer(
+      setTimeout(() => {
+        setAddFriendSuccess('')
+      }, 5000)
+    )
   }
 
   const updateAddFriendUsername = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +103,7 @@ function AddFriend() {
   }
 
   return (
-    <div className='flex flex-col gap-2'>
+    <div className='space-y-2'>
       <form onSubmit={sendFriendRequestHandle} className='flex items-stretch'>
         <div className='relative w-full'>
           <input
@@ -107,6 +113,7 @@ function AddFriend() {
             placeholder='Username'
             required
             pattern='^[a-z0-9_]{3,}$'
+            aria-describedby='add-friend-help'
             className={`px-2.5 py-2 w-full text-base bg-zinc-100 dark:bg-zinc-800 rounded-l-xl border-2 border-r-0 focus:outline-none focus:ring-0 peer disabled:cursor-not-allowed focus:invalid:border-red-500 dark:focus:invalid:border-red-500 disabled:opacity-70 border-zinc-300 dark:border-zinc-600 focus:border-blue-500 dark:focus:border-blue-500 ${
               isLoadingSendFriendRequest ? 'pr-10' : ''
             }`}
@@ -132,15 +139,18 @@ function AddFriend() {
       </form>
 
       {addFriendError && (
-        <div className='text-red-500 text-sm font-semibold'>
+        <p id='add-friend-help' className='text-red-500 text-sm font-semibold'>
           {addFriendError}
-        </div>
+        </p>
       )}
 
       {addFriendSuccess && (
-        <div className='text-green-500 text-sm font-semibold'>
+        <p
+          id='add-friend-help'
+          className='text-green-500 text-sm font-semibold'
+        >
           {addFriendSuccess}
-        </div>
+        </p>
       )}
     </div>
   )

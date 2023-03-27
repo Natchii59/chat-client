@@ -2,28 +2,35 @@ import { useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { useAuthenticateQuery } from '@/stores/user/authApiSlice'
 import { AppDispatch } from '@/stores'
-import { setUser } from '@/stores/user/userSlice'
-import { SocketContext } from '@/utils/contexts/SocketContext'
 import { setConversations } from '@/stores/conversations/conversationsSlice'
 import {
   setFriends,
   setReceivedRequests,
   setSentRequests
 } from '@/stores/friends/friendsSlice'
+import { useAuthenticateQuery } from '@/stores/user/authApiSlice'
+import { setUser } from '@/stores/user/userSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
 
 function RequireAuth() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const dispatch = useDispatch<AppDispatch>()
-
-  const { data: dataAuth, isLoading, isError, error } = useAuthenticateQuery()
-
   const { socket } = useContext(SocketContext)
 
+  const dispatch = useDispatch<AppDispatch>()
+
   const routesWithoutAuth = ['/sign-in', '/sign-up']
+
+  const {
+    data: dataAuth,
+    isLoading,
+    isError,
+    error
+  } = useAuthenticateQuery({} as any, {
+    skip: routesWithoutAuth.includes(location.pathname)
+  })
 
   useEffect(() => {
     if (isError) {
@@ -35,10 +42,7 @@ function RequireAuth() {
 
     const { data, errors } = dataAuth
 
-    if (
-      (errors?.length || !data?.Profile) &&
-      !routesWithoutAuth.includes(location.pathname)
-    ) {
+    if (errors?.length || !data?.Profile) {
       socket.disconnect()
 
       navigate('/sign-in', {
@@ -47,8 +51,6 @@ function RequireAuth() {
       })
       return
     } else {
-      if (!data?.Profile) return
-
       const {
         conversations,
         friends,
@@ -56,11 +58,13 @@ function RequireAuth() {
         sentRequests,
         ...user
       } = data.Profile
+
       dispatch(setUser(user))
-      dispatch(setConversations(conversations))
-      dispatch(setFriends(friends))
-      dispatch(setReceivedRequests(receivedRequests))
-      dispatch(setSentRequests(sentRequests))
+
+      if (conversations) dispatch(setConversations(conversations))
+      if (friends) dispatch(setFriends(friends))
+      if (receivedRequests) dispatch(setReceivedRequests(receivedRequests))
+      if (sentRequests) dispatch(setSentRequests(sentRequests))
 
       socket.connect()
     }

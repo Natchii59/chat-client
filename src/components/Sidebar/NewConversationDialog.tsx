@@ -1,89 +1,81 @@
-import { Fragment, useContext, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { Dialog, RadioGroup, Transition } from '@headlessui/react'
+import { Fragment, useContext, useState } from 'react'
 import { FaCheck, FaPlus, FaTimes } from 'react-icons/fa'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
-import { selectFriends } from '@/stores/friends/friendsSlice'
+import Button from '../Button'
 import ImageOptimized from '../ImageOptimized'
+import { AppDispatch } from '@/stores'
+import { initInformationDialogError } from '@/stores/app/appSlice'
+import { useCreateConversationMutation } from '@/stores/conversations/conversationsApiSlice'
 import {
   addConversationWithSort,
   selectConversations
 } from '@/stores/conversations/conversationsSlice'
-import { useCreateConversationMutation } from '@/stores/conversations/conversationsApiSlice'
-import { AppDispatch } from '@/stores'
-import { initInformationDialog } from '@/stores/app/appSlice'
+import { selectFriends } from '@/stores/friends/friendsSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
-import Button from '../Button'
 
 function NewConversationDialog() {
   const navigate = useNavigate()
 
-  const friends = useSelector(selectFriends)
-  const conversations = useSelector(selectConversations)
+  const { socket } = useContext(SocketContext)
 
   const dispatch = useDispatch<AppDispatch>()
 
-  const { socket } = useContext(SocketContext)
+  const friends = useSelector(selectFriends)
+  const conversations = useSelector(selectConversations)
 
   const [isOpen, setIsOpen] = useState(false)
   const [friendId, setFriendId] = useState<string>('')
 
   const [createConversation, { isLoading }] = useCreateConversationMutation()
 
+  function openModal() {
+    setIsOpen(true)
+  }
+
   function closeModal() {
     setIsOpen(false)
     setFriendId('')
   }
 
-  function openModal() {
-    setIsOpen(true)
-  }
-
   const createConversationHandle = async () => {
     if (!friendId) return
 
-    const conversation = conversations.find(
+    const findConversation = conversations.find(
       conversation =>
         conversation.user1.id === friendId || conversation.user2.id === friendId
     )
 
-    if (conversation) {
-      navigate(`/conversation/${conversation.id}`)
+    if (findConversation) {
+      navigate(`/conversation/${findConversation.id}`)
       closeModal()
       return
     }
 
     const { data, errors } = await createConversation({
-      userId: friendId
+      input: {
+        userId: friendId
+      }
     }).unwrap()
 
     if (errors) {
-      const message = Array.isArray(errors[0].message)
-        ? errors[0].message[0].message
-        : errors[0].message
-
-      dispatch(
-        initInformationDialog({
-          message: `Error: ${message} Status: ${errors[0].statusCode}. Please try again later.`,
-          type: 'error'
-        })
-      )
+      dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (data?.CreateConversation) {
-      const { conversation, created } = data.CreateConversation
+    if (!data.CreateConversation) return
 
-      if (created) {
-        socket.emit('createConversation', conversation)
-      } else {
-        console.log(conversation)
-        dispatch(addConversationWithSort(conversation))
-      }
-      navigate(`/conversation/${conversation.id}`)
-      closeModal()
+    const { conversation, created } = data.CreateConversation
+
+    if (created) {
+      socket.emit('createConversation', conversation)
+    } else {
+      dispatch(addConversationWithSort(conversation))
     }
+    navigate(`/conversation/${conversation.id}`)
+    closeModal()
   }
 
   return (

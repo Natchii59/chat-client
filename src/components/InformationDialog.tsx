@@ -2,14 +2,14 @@ import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import Button, { ButtonType } from './Button'
+import { AppDispatch } from '@/stores'
 import {
   closeInformationDialog,
   selectMessageInformationDialog,
   selectShowInformationDialog,
   selectTypeInformationDialog
 } from '@/stores/app/appSlice'
-import { AppDispatch } from '@/stores'
-import Button, { ButtonType } from './Button'
 
 function InformationDialog({ children }: React.PropsWithChildren) {
   const typesTitle = {
@@ -72,7 +72,11 @@ function InformationDialog({ children }: React.PropsWithChildren) {
                   </Dialog.Title>
 
                   <div className='mt-2'>
-                    <p className='text-base text-zinc-500 dark:text-zinc-400'>
+                    <p
+                      className={`text-base text-zinc-500 dark:text-zinc-400 ${
+                        type === 'error' ? 'whitespace-pre-line' : null
+                      }`}
+                    >
                       {message}
                     </p>
                   </div>

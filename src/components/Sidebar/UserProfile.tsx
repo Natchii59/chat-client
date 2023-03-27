@@ -1,20 +1,25 @@
-import { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { Popover } from '@headlessui/react'
-import { usePopper } from 'react-popper'
-import { Link, useNavigate } from 'react-router-dom'
+import { useContext, useState } from 'react'
 import { FaEllipsisH } from 'react-icons/fa'
+import { usePopper } from 'react-popper'
+import { useDispatch, useSelector } from 'react-redux'
+import { Link, useNavigate } from 'react-router-dom'
 
-import { logout, selectUser } from '@/stores/user/userSlice'
 import ImageOptimized from '../ImageOptimized'
 import { AppDispatch } from '@/stores'
+import { selectConversationId } from '@/stores/conversation/conversationSlice'
+import { logout, selectUser } from '@/stores/user/userSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
 
 function UserProfile() {
   const navigate = useNavigate()
 
-  const user = useSelector(selectUser)
+  const { socket } = useContext(SocketContext)
 
   const dispatch = useDispatch<AppDispatch>()
+
+  const user = useSelector(selectUser)
+  const conversationId = useSelector(selectConversationId)
 
   const [referenceElement, setReferenceElement] = useState<any>()
   const [popperElement, setPopperElement] = useState<any>()
@@ -33,6 +38,10 @@ function UserProfile() {
 
   const logoutHandle = () => {
     dispatch(logout())
+
+    if (conversationId) socket.emit('onConversationLeave', { conversationId })
+
+    socket.disconnect()
     navigate('/sign-in')
   }
 

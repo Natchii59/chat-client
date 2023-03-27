@@ -1,45 +1,33 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 
 import { RootState } from '../index'
-import { Conversation } from '../conversation/conversationSlice'
+import { Image, Maybe } from '@/utils/graphqlTypes'
 
-export interface Image {
-  id: string
-  createdAt: Date
-  updatedAt: Date
-  key: string
-  blurhash: string
-}
-
-export interface User {
+export interface UserStore {
   id: string
   username: string
-  avatar?: Image
+  avatar?: Maybe<Image>
   createdAt: Date
   updatedAt: Date
-  conversations: Conversation[]
-  friends: User[]
-  receivedRequests: User[]
-  sentRequests: User[]
 }
 
 export interface UserState {
-  user: User | null
+  user?: UserStore
 }
 
 const initialState: UserState = {
-  user: null
+  user: undefined
 }
 
 export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    setUser: (state, action) => {
+    setUser: (state, action: PayloadAction<UserStore>) => {
       state.user = action.payload
     },
     logout: state => {
-      state.user = null
+      state.user = undefined
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
     }

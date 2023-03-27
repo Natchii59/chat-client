@@ -1,30 +1,34 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { FaPaperPlane } from 'react-icons/fa'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
-import { SocketContext } from '@/utils/contexts/SocketContext'
+import { AppDispatch } from '@/stores'
+import { initInformationDialogError } from '@/stores/app/appSlice'
 import { useCreateMessageMutation } from '@/stores/conversation/conversationApiSlice'
 import {
   selectConversationId,
   selectConversationIsTyping,
   selectConversationUser
 } from '@/stores/conversation/conversationSlice'
+import { SocketContext } from '@/utils/contexts/SocketContext'
 
-function MessageBoxInput() {
-  const [message, setMessage] = useState('')
+function MessageInput() {
+  const { socket } = useContext(SocketContext)
+
+  const dispatch = useDispatch<AppDispatch>()
 
   const conversationId = useSelector(selectConversationId)
   const conversationUser = useSelector(selectConversationUser)
   const isTyping = useSelector(selectConversationIsTyping)
 
-  const textAreaRef = useRef<HTMLTextAreaElement>(null)
-
-  const [createMessage, { isLoading }] = useCreateMessageMutation()
+  const [message, setMessage] = useState('')
 
   const [timer, setTimer] = useState<ReturnType<typeof setTimeout>>()
   const [isTypingStatus, setIsTypingStatus] = useState<boolean>(false)
 
-  const { socket } = useContext(SocketContext)
+  const textAreaRef = useRef<HTMLTextAreaElement>(null)
+
+  const [createMessage, { isLoading }] = useCreateMessageMutation()
 
   const handleSendMessage = async (
     e:
@@ -36,18 +40,20 @@ function MessageBoxInput() {
     if (!conversationId || message.trim().length === 0) return
 
     const { data, errors } = await createMessage({
-      content: message,
-      conversationId
+      input: {
+        content: message.trim(),
+        conversationId
+      }
     }).unwrap()
 
     if (errors) {
-      console.log(errors)
+      dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (!data) return
+    if (!data.CreateMessage) return
 
-    socket.emit('createMessage', data.CreateMessage)
+    socket.emit('createMessage', { message: data.CreateMessage })
     setMessage('')
     textAreaRef.current?.focus()
   }
@@ -122,4 +128,4 @@ function MessageBoxInput() {
   )
 }
 
-export default MessageBoxInput
+export default MessageInput

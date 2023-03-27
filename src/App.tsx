@@ -1,24 +1,27 @@
 import { PropsWithChildren } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
 import { Provider } from 'react-redux'
+import { Navigate, Route, Routes } from 'react-router-dom'
 
-import Home from './pages/Home'
-import RequireAuth from './components/RequireAuth'
-import SignIn from './pages/SignIn'
-import Layout from './components/Layout'
-import Conversation from './pages/Conversation'
-import SocketProvider from './components/Socket'
-import SignUp from './pages/SignUp'
-import { SocketContext, socket } from './utils/contexts/SocketContext'
-import { store } from './stores'
 import InformationDialog from './components/InformationDialog'
+import Layout from './components/Layout'
+import RequireAuth from './components/RequireAuth'
+import SocketProvider from './components/SocketProvider'
+import Conversation from './pages/Conversation'
 import Error from './pages/Error'
+import Home from './pages/Home'
+import SignIn from './pages/SignIn'
+import SignUp from './pages/SignUp'
+import Testing from './pages/Testing'
+import { store } from './stores'
+import { SocketContext, socket } from './utils/contexts/SocketContext'
 
 function Providers({ children }: PropsWithChildren) {
   return (
     <Provider store={store}>
       <SocketContext.Provider value={{ socket }}>
-        <InformationDialog>{children}</InformationDialog>
+        <SocketProvider>
+          <InformationDialog>{children}</InformationDialog>
+        </SocketProvider>
       </SocketContext.Provider>
     </Provider>
   )
@@ -32,11 +35,10 @@ function App() {
           <Route path='sign-in' element={<SignIn />} />
           <Route path='sign-up' element={<SignUp />} />
 
-          <Route path='/' element={<SocketProvider />}>
-            <Route path='/' element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path='conversation/:id' element={<Conversation />} />
-            </Route>
+          <Route path='/' element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path='conversation/:id' element={<Conversation />} />
+            <Route path='testing' element={<Testing />} />
           </Route>
         </Route>
 

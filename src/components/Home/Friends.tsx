@@ -1,8 +1,8 @@
 import { useSelector } from 'react-redux'
 
-import { selectFriends } from '@/stores/friends/friendsSlice'
 import FriendPopoverOptions from './FriendPopoverOptions'
 import ImageOptimized from '../ImageOptimized'
+import { selectFriends } from '@/stores/friends/friendsSlice'
 
 function Friends() {
   const friends = useSelector(selectFriends)

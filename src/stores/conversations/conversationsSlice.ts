@@ -1,11 +1,20 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import orderBy from 'lodash/orderBy'
 
 import { RootState } from '../index'
-import { Conversation } from '../conversation/conversationSlice'
+import { Conversation, Message } from '@/utils/graphqlTypes'
+
+export type ConversationType = Conversation & {
+  isTyping?: boolean
+}
+
+export interface UpdateConversationWithDeletedMessagePayload {
+  conversationId: ConversationType['id']
+  newLastMessage: Message
+}
 
 export interface ConversationsState {
-  conversations: Conversation[]
+  conversations: ConversationType[]
 }
 
 const initialState: ConversationsState = {
@@ -16,16 +25,22 @@ export const conversationsSlice = createSlice({
   name: 'conversations',
   initialState,
   reducers: {
-    setConversations: (state, action) => {
+    setConversations: (
+      state,
+      action: PayloadAction<ConversationsState['conversations']>
+    ) => {
       state.conversations = action.payload
     },
-    addConversation: (state, action) => {
+    addConversation: (state, action: PayloadAction<ConversationType>) => {
       state.conversations = [action.payload, ...state.conversations]
     },
-    addConversationWithSort: (state, action) => {
+    addConversationWithSort: (
+      state,
+      action: PayloadAction<ConversationType>
+    ) => {
       state.conversations = orderBy(
         [action.payload, ...state.conversations],
-        (conversation: Conversation) => {
+        conversation => {
           if (conversation.lastMessage) {
             return conversation.lastMessage.createdAt
           }
@@ -35,12 +50,18 @@ export const conversationsSlice = createSlice({
         'desc'
       )
     },
-    removeConversation: (state, action) => {
+    removeConversation: (
+      state,
+      action: PayloadAction<ConversationType['id']>
+    ) => {
       state.conversations = state.conversations.filter(
         conversation => conversation.id !== action.payload
       )
     },
-    addTypingConversation: (state, action) => {
+    addTypingConversation: (
+      state,
+      action: PayloadAction<ConversationType['id']>
+    ) => {
       const conversation = state.conversations.find(
         conversation => conversation.id === action.payload
       )
@@ -48,7 +69,10 @@ export const conversationsSlice = createSlice({
         conversation.isTyping = true
       }
     },
-    removeTypingConversation: (state, action) => {
+    removeTypingConversation: (
+      state,
+      action: PayloadAction<ConversationType['id']>
+    ) => {
       const conversation = state.conversations.find(
         conversation => conversation.id === action.payload
       )
@@ -56,18 +80,28 @@ export const conversationsSlice = createSlice({
         conversation.isTyping = false
       }
     },
-    updateConversationWithNewMessage: (state, action) => {
-      state.conversations = [
-        {
-          ...action.payload.conversation,
-          lastMessage: action.payload
-        },
-        ...state.conversations.filter(
-          conversation => conversation.id !== action.payload.conversation.id
-        )
-      ]
+    updateConversationWithNewMessage: (
+      state,
+      action: PayloadAction<Message>
+    ) => {
+      if (action.payload.conversation) {
+        state.conversations = [
+          {
+            ...action.payload.conversation,
+            lastMessage: action.payload
+          },
+          ...state.conversations.filter(
+            conversation =>
+              action.payload.conversation &&
+              conversation.id !== action.payload.conversation.id
+          )
+        ]
+      }
     },
-    updateConversationWithDeletedMessage: (state, action) => {
+    updateConversationWithDeletedMessage: (
+      state,
+      action: PayloadAction<UpdateConversationWithDeletedMessagePayload>
+    ) => {
       const conversation = state.conversations.find(
         conversation => conversation.id === action.payload.conversationId
       )
