@@ -70,7 +70,7 @@ function NewConversationDialog() {
     const { conversation, created } = data.CreateConversation
 
     if (created) {
-      socket.emit('createConversation', conversation)
+      socket.emit('createConversation', { conversation })
     } else {
       dispatch(addConversationWithSort(conversation))
     }

@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -17,6 +17,7 @@ import {
 } from '@/stores/conversation/conversationSlice'
 import { removeTypingConversation } from '@/stores/conversations/conversationsSlice'
 import { selectUser } from '@/stores/user/userSlice'
+import { MessageInputContext } from '@/utils/contexts/MessageInputContext'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 
 function Conversation() {
@@ -30,6 +31,9 @@ function Conversation() {
 
   const currentUser = useSelector(selectUser)
   const userConversation = useSelector(selectConversationUser)
+
+  const [messageInputRef, setMessageInputRef] =
+    useState<HTMLTextAreaElement | null>(null)
 
   const { data: dataConversation, isLoading } = useConversationQuery(
     {
@@ -84,17 +88,21 @@ function Conversation() {
   }
 
   return (
-    <div className='flex flex-col items-start h-screen p-2'>
-      <div className='w-full px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-between'>
-        <p className='text-lg font-extrabold'>{userConversation?.username}</p>
+    <MessageInputContext.Provider
+      value={{ messageInputRef, setMessageInputRef }}
+    >
+      <div className='flex flex-col items-start h-screen p-2'>
+        <div className='w-full px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-between'>
+          <p className='text-lg font-extrabold'>{userConversation?.username}</p>
 
-        <ConversationPopoverOptions />
+          <ConversationPopoverOptions />
+        </div>
+
+        <MessagesList />
+
+        <MessageInput />
       </div>
-
-      <MessagesList />
-
-      <MessageInput />
-    </div>
+    </MessageInputContext.Provider>
   )
 }
 

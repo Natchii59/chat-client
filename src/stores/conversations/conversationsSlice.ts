@@ -98,6 +98,24 @@ export const conversationsSlice = createSlice({
         ]
       }
     },
+    updateConversationWithUpdatedMessage: (
+      state,
+      action: PayloadAction<{
+        conversationId: ConversationType['id']
+        message: Message
+      }>
+    ) => {
+      const conversation = state.conversations.find(
+        conversation => conversation.id === action.payload.conversationId
+      )
+
+      if (
+        conversation &&
+        conversation.lastMessage?.id === action.payload.message.id
+      ) {
+        conversation.lastMessage = action.payload.message
+      }
+    },
     updateConversationWithDeletedMessage: (
       state,
       action: PayloadAction<UpdateConversationWithDeletedMessagePayload>
@@ -120,6 +138,7 @@ export const {
   addTypingConversation,
   removeTypingConversation,
   updateConversationWithNewMessage,
+  updateConversationWithUpdatedMessage,
   updateConversationWithDeletedMessage
 } = conversationsSlice.actions
 export default conversationsSlice.reducer

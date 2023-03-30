@@ -3,6 +3,7 @@ import {
   Mutation,
   MutationCreateMessageArgs,
   MutationDeleteMessageArgs,
+  MutationUpdateMessageArgs,
   Query,
   QueryFindOneConversationArgs,
   QueryPaginationMessageArgs
@@ -60,6 +61,7 @@ export const conversationApiSlice = apiSlice.injectEndpoints({
                   id
                   content
                   createdAt
+                  isModified
                   user {
                     id
                     username
@@ -89,6 +91,7 @@ export const conversationApiSlice = apiSlice.injectEndpoints({
                 id
                 content
                 createdAt
+                isModified
                 user {
                   id
                   username
@@ -124,6 +127,35 @@ export const conversationApiSlice = apiSlice.injectEndpoints({
         }
       })
     }),
+    updateMessage: builder.mutation<
+      Response<Mutation['UpdateMessage']>,
+      MutationUpdateMessageArgs
+    >({
+      query: payload => ({
+        url: '',
+        body: {
+          query: `
+            mutation($input: UpdateMessageInput!) {
+              UpdateMessage(input: $input) {
+                id
+                content
+                createdAt
+                isModified
+                user {
+                  id
+                  username
+                  avatar {
+                    key
+                    blurhash
+                  }
+                }
+              }
+            }
+          `,
+          variables: payload
+        }
+      })
+    }),
     deleteMessage: builder.mutation<
       Response<Mutation['DeleteMessage']>,
       MutationDeleteMessageArgs
@@ -147,5 +179,6 @@ export const {
   useConversationQuery,
   useConversationMessagesQuery,
   useCreateMessageMutation,
+  useUpdateMessageMutation,
   useDeleteMessageMutation
 } = conversationApiSlice

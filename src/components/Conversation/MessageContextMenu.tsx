@@ -8,7 +8,8 @@ import { initInformationDialogError } from '@/stores/app/appSlice'
 import { useDeleteMessageMutation } from '@/stores/conversation/conversationApiSlice'
 import {
   selectConversationId,
-  selectConversationUser
+  selectConversationUser,
+  setConversationEditMessageId
 } from '@/stores/conversation/conversationSlice'
 import { selectUser } from '@/stores/user/userSlice'
 import { socket } from '@/utils/contexts/SocketContext'
@@ -72,6 +73,11 @@ function MessageContextMenu({
     })
   }
 
+  const editMessageHandle = () => {
+    dispatch(setConversationEditMessageId(messageId))
+    onHide()
+  }
+
   if (!show) return null
 
   return (
@@ -83,7 +89,10 @@ function MessageContextMenu({
       className='z-40 bg-zinc-100 dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-xl shadow-md p-1 w-screen max-w-max flex flex-col items-stretch gap-1'
     >
       {ownMessage ? (
-        <button className='text-sm font-medium py-1.5 px-2 text-left hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg'>
+        <button
+          onClick={editMessageHandle}
+          className='text-sm font-medium py-1.5 px-2 text-left hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg'
+        >
           Edit the message
         </button>
       ) : null}

@@ -9,6 +9,7 @@ export interface ConversationState {
   messages: Message[]
   totalCount?: number
   isTyping: boolean
+  editMessageId?: string
 }
 
 const initialState: ConversationState = {
@@ -16,7 +17,8 @@ const initialState: ConversationState = {
   user: undefined,
   messages: [],
   totalCount: undefined,
-  isTyping: false
+  isTyping: false,
+  editMessageId: undefined
 }
 
 export const conversationSlice = createSlice({
@@ -53,10 +55,24 @@ export const conversationSlice = createSlice({
     ) => {
       state.isTyping = action.payload
     },
+    setConversationEditMessageId: (
+      state,
+      action: PayloadAction<ConversationState['editMessageId']>
+    ) => {
+      state.editMessageId = action.payload
+    },
     addConversationMessage: (state, action: PayloadAction<Message>) => {
       state.messages.splice(0, 0, action.payload)
       state.totalCount =
         state.totalCount != null ? state.totalCount + 1 : undefined
+    },
+    updateConversationMessage: (state, action: PayloadAction<Message>) => {
+      const index = state.messages.findIndex(
+        message => message.id === action.payload.id
+      )
+      if (index !== -1) {
+        state.messages[index] = action.payload
+      }
     },
     removeConversationMessage: (
       state,
@@ -65,6 +81,8 @@ export const conversationSlice = createSlice({
       state.messages = state.messages.filter(
         message => message.id !== action.payload
       )
+      state.totalCount =
+        state.totalCount != null ? state.totalCount - 1 : undefined
     }
   }
 })
@@ -75,7 +93,9 @@ export const {
   setConversationMessages,
   setConversationTotalCount,
   setConversationIsTyping,
+  setConversationEditMessageId,
   addConversationMessage,
+  updateConversationMessage,
   removeConversationMessage
 } = conversationSlice.actions
 export default conversationSlice.reducer
@@ -89,3 +109,5 @@ export const selectConversationTotalCount = (state: RootState) =>
   state.conversation.totalCount
 export const selectConversationIsTyping = (state: RootState) =>
   state.conversation.isTyping
+export const selectConversationEditMessageId = (state: RootState) =>
+  state.conversation.editMessageId

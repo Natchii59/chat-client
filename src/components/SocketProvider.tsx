@@ -6,14 +6,16 @@ import {
   addConversationMessage,
   removeConversationMessage,
   selectConversationId,
-  setConversationIsTyping
+  setConversationIsTyping,
+  updateConversationMessage
 } from '@/stores/conversation/conversationSlice'
 import {
   addConversation,
   addTypingConversation,
   removeTypingConversation,
   updateConversationWithDeletedMessage,
-  updateConversationWithNewMessage
+  updateConversationWithNewMessage,
+  updateConversationWithUpdatedMessage
 } from '@/stores/conversations/conversationsSlice'
 import {
   addFriend,
@@ -46,6 +48,28 @@ function SocketProvider({ children }: PropsWithChildren) {
       'onMessageCreatedSidebar',
       ({ message }: { message: Message }) => {
         dispatch(updateConversationWithNewMessage(message))
+      }
+    )
+
+    socket.on('onMessageUpdated', ({ message }: { message: Message }) => {
+      dispatch(updateConversationMessage(message))
+    })
+
+    socket.on(
+      'onMessageUpdatedSidebar',
+      ({
+        message,
+        conversationId
+      }: {
+        message: Message
+        conversationId: string
+      }) => {
+        dispatch(
+          updateConversationWithUpdatedMessage({
+            conversationId,
+            message
+          })
+        )
       }
     )
 
@@ -145,9 +169,12 @@ function SocketProvider({ children }: PropsWithChildren) {
       dispatch(removeFriend(userId))
     })
 
-    socket.on('onConversationCreated', (conversation: Conversation) => {
-      dispatch(addConversation(conversation))
-    })
+    socket.on(
+      'onConversationCreated',
+      ({ conversation }: { conversation: Conversation }) => {
+        dispatch(addConversation(conversation))
+      }
+    )
 
     return () => {
       socket.off('onMessageCreated')
