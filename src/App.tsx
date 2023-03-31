@@ -9,6 +9,7 @@ import SocketProvider from './components/SocketProvider'
 import Conversation from './pages/Conversation'
 import Error from './pages/Error'
 import Home from './pages/Home'
+import Settings from './pages/Settings'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import Testing from './pages/Testing'
@@ -40,6 +41,8 @@ function App() {
             <Route path='conversation/:id' element={<Conversation />} />
             <Route path='testing' element={<Testing />} />
           </Route>
+
+          <Route path='settings' element={<Settings />} />
         </Route>
 
         <Route path='error' element={<Error />} />
