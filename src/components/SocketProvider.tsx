@@ -1,8 +1,10 @@
-import { PropsWithChildren, useContext, useEffect } from 'react'
+import { PropsWithChildren, useContext, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { Message } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import {
+  MessageConversationStore,
   addConversationMessage,
   removeConversationMessage,
   selectConversationId,
@@ -10,6 +12,7 @@ import {
   updateConversationMessage
 } from '@/stores/conversation/conversationSlice'
 import {
+  ConversationsStore,
   addConversation,
   addTypingConversation,
   removeTypingConversation,
@@ -18,17 +21,20 @@ import {
   updateConversationWithUpdatedMessage
 } from '@/stores/conversations/conversationsSlice'
 import {
+  UserFriendsStore,
   addFriend,
+  addFriendOnline,
   addReceivedRequest,
   addSentRequest,
   removeFriend,
   removeReceivedRequest,
   removeSentRequest,
+  selectFriends,
   selectReceivedRequests,
-  selectSentRequests
+  selectSentRequests,
+  setFriendsStatus
 } from '@/stores/friends/friendsSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
-import { Conversation, Message, User } from '@/utils/graphqlTypes'
 
 function SocketProvider({ children }: PropsWithChildren) {
   const { socket } = useContext(SocketContext)
@@ -38,11 +44,18 @@ function SocketProvider({ children }: PropsWithChildren) {
   const currentConversationId = useSelector(selectConversationId)
   const receivedRequests = useSelector(selectReceivedRequests)
   const sentRequests = useSelector(selectSentRequests)
+  const friends = useSelector(selectFriends)
+
+  const [intervalFriendsStatus, setIntervalFriendsStatus] =
+    useState<NodeJS.Timeout>()
 
   useEffect(() => {
-    socket.on('onMessageCreated', ({ message }: { message: Message }) => {
-      dispatch(addConversationMessage(message))
-    })
+    socket.on(
+      'onMessageCreated',
+      ({ message }: { message: MessageConversationStore }) => {
+        dispatch(addConversationMessage(message))
+      }
+    )
 
     socket.on(
       'onMessageCreatedSidebar',
@@ -51,18 +64,21 @@ function SocketProvider({ children }: PropsWithChildren) {
       }
     )
 
-    socket.on('onMessageUpdated', ({ message }: { message: Message }) => {
-      dispatch(updateConversationMessage(message))
-    })
+    socket.on(
+      'onMessageUpdated',
+      ({ message }: { message: MessageConversationStore }) => {
+        dispatch(updateConversationMessage(message))
+      }
+    )
 
     socket.on(
       'onMessageUpdatedSidebar',
       ({
-        message,
-        conversationId
+        conversationId,
+        message
       }: {
-        message: Message
         conversationId: string
+        message: Message
       }) => {
         dispatch(
           updateConversationWithUpdatedMessage({
@@ -73,12 +89,9 @@ function SocketProvider({ children }: PropsWithChildren) {
       }
     )
 
-    socket.on(
-      'onMessageDeleted',
-      ({ messageId }: { messageId: Message['id'] }) => {
-        dispatch(removeConversationMessage(messageId))
-      }
-    )
+    socket.on('onMessageDeleted', ({ messageId }: { messageId: string }) => {
+      dispatch(removeConversationMessage(messageId))
+    })
 
     socket.on(
       'onMessageDeletedSidebar',
@@ -86,7 +99,7 @@ function SocketProvider({ children }: PropsWithChildren) {
         conversationId,
         newLastMessage
       }: {
-        conversationId: Conversation['id']
+        conversationId: string
         newLastMessage: Message
       }) => {
         dispatch(
@@ -112,73 +125,85 @@ function SocketProvider({ children }: PropsWithChildren) {
 
     socket.on(
       'onTypingStartConversation',
-      ({ conversationId }: { conversationId: Conversation['id'] }) => {
+      ({ conversationId }: { conversationId: string }) => {
         if (conversationId === currentConversationId) return
+        console.log('onTypingStartConversation')
         dispatch(addTypingConversation(conversationId))
       }
     )
 
     socket.on(
       'onTypingStopConversation',
-      ({ conversationId }: { conversationId: Conversation['id'] }) => {
+      ({ conversationId }: { conversationId: string }) => {
         if (conversationId === currentConversationId) return
+        console.log('onTypingStopConversation')
         dispatch(removeTypingConversation(conversationId))
       }
     )
 
-    socket.on(
-      'onFriendRequestAccepted',
-      ({ userId }: { userId: User['id'] }) => {
-        const user =
-          receivedRequests.find(user => user.id === userId) ??
-          sentRequests.find(user => user.id === userId)
+    socket.on('onFriendRequestAccepted', ({ userId }: { userId: string }) => {
+      const user =
+        receivedRequests.find(user => user.id === userId) ??
+        sentRequests.find(user => user.id === userId)
 
-        if (!user) return
+      if (!user) return
 
-        dispatch(addFriend(user))
-        dispatch(removeReceivedRequest(userId))
-        dispatch(removeSentRequest(userId))
-      }
-    )
-
-    socket.on(
-      'onFriendRequestDeclined',
-      ({ userId }: { userId: User['id'] }) => {
-        dispatch(removeReceivedRequest(userId))
-        dispatch(removeSentRequest(userId))
-      }
-    )
-
-    socket.on(
-      'onFriendRequestCanceled',
-      ({ userId }: { userId: User['id'] }) => {
-        dispatch(removeReceivedRequest(userId))
-        dispatch(removeSentRequest(userId))
-      }
-    )
-
-    socket.on('onFriendRequestSentReceived', ({ user }: { user: User }) => {
-      dispatch(addReceivedRequest(user))
+      dispatch(addFriend(user))
+      dispatch(removeReceivedRequest(userId))
+      dispatch(removeSentRequest(userId))
     })
 
-    socket.on('onFriendRequestSentSended', ({ user }: { user: User }) => {
-      dispatch(addSentRequest(user))
+    socket.on('onFriendRequestDeclined', ({ userId }: { userId: string }) => {
+      dispatch(removeReceivedRequest(userId))
+      dispatch(removeSentRequest(userId))
     })
 
-    socket.on('onFriendRemoved', ({ userId }: { userId: User['id'] }) => {
+    socket.on('onFriendRequestCanceled', ({ userId }: { userId: string }) => {
+      dispatch(removeReceivedRequest(userId))
+      dispatch(removeSentRequest(userId))
+    })
+
+    socket.on(
+      'onFriendRequestSentReceived',
+      ({ user }: { user: UserFriendsStore }) => {
+        dispatch(addReceivedRequest(user))
+      }
+    )
+
+    socket.on(
+      'onFriendRequestSentSended',
+      ({ user }: { user: UserFriendsStore }) => {
+        dispatch(addSentRequest(user))
+      }
+    )
+
+    socket.on('onFriendRemoved', ({ userId }: { userId: string }) => {
       dispatch(removeFriend(userId))
     })
 
     socket.on(
       'onConversationCreated',
-      ({ conversation }: { conversation: Conversation }) => {
+      ({ conversation }: { conversation: ConversationsStore }) => {
         dispatch(addConversation(conversation))
       }
     )
 
+    socket.on(
+      'onFriendsStatus',
+      ({ friendsStatusIds }: { friendsStatusIds: string[] }) => {
+        dispatch(setFriendsStatus(friendsStatusIds))
+      }
+    )
+
+    socket.on('onFriendsStatusConnected', ({ userId }: { userId: string }) => {
+      dispatch(addFriendOnline(userId))
+    })
+
     return () => {
       socket.off('onMessageCreated')
       socket.off('onMessageCreatedSidebar')
+      socket.off('onMessageUpdated')
+      socket.off('onMessageUpdatedSidebar')
       socket.off('onMessageDeleted')
       socket.off('onMessageDeletedSidebar')
       socket.off('onTypingStart')
@@ -193,8 +218,27 @@ function SocketProvider({ children }: PropsWithChildren) {
       socket.off('onFriendRequestSentSended')
       socket.off('onFriendRemoved')
       socket.off('onConversationCreated')
+      socket.off('onFriendsStatus')
+      socket.off('onFriendsStatusConnected')
     }
   }, [socket, dispatch, currentConversationId, receivedRequests, sentRequests])
+
+  useEffect(() => {
+    clearInterval(intervalFriendsStatus)
+    if (!friends.length) return
+
+    const interval = setInterval(() => {
+      socket.emit('getFriendsStatus', {
+        userIds: friends.map(friend => friend.id)
+      })
+    }, 10000)
+
+    setIntervalFriendsStatus(interval)
+
+    return () => {
+      clearInterval(intervalFriendsStatus)
+    }
+  }, [friends])
 
   return <>{children}</>
 }

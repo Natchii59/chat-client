@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { usePopper } from 'react-popper'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { useDeleteMessageMutation } from '@/apollo/generated/graphql'
 import { useCloseContextMenu } from '@/hooks/useCloseContextMenu'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
-import { useDeleteMessageMutation } from '@/stores/conversation/conversationApiSlice'
 import {
   selectConversationId,
   selectConversationUser,
@@ -13,6 +13,7 @@ import {
 } from '@/stores/conversation/conversationSlice'
 import { selectUser } from '@/stores/user/userSlice'
 import { socket } from '@/utils/contexts/SocketContext'
+import { ErrorType } from '@/utils/types'
 
 interface MessageContextMenuProps {
   target: HTMLElement | null
@@ -48,13 +49,19 @@ function MessageContextMenu({
     onHide
   })
 
-  const [deleteMessage, { isLoading: isLoadingDeleteMessage }] =
+  const [deleteMessage, { loading: loadingDeleteMessage }] =
     useDeleteMessageMutation()
 
   const deleteMessageHandle = async () => {
     if (!conversationId || !userConversation || !currentUser) return
 
-    const { data, errors } = await deleteMessage({ id: messageId }).unwrap()
+    const { data, errors: rawErrors } = await deleteMessage({
+      variables: {
+        id: messageId
+      }
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     onHide()
 
@@ -63,7 +70,7 @@ function MessageContextMenu({
       return
     }
 
-    if (!data.DeleteMessage) return
+    if (!data?.DeleteMessage) return
 
     socket.emit('deleteMessage', {
       conversationId,
@@ -100,7 +107,7 @@ function MessageContextMenu({
       {ownMessage ? (
         <button
           onClick={deleteMessageHandle}
-          disabled={isLoadingDeleteMessage}
+          disabled={loadingDeleteMessage}
           className='text-sm font-medium py-1.5 px-2 text-left text-red-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg'
         >
           Delete the message

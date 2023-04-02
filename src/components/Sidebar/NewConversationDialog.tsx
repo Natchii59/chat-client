@@ -6,15 +6,16 @@ import { useNavigate } from 'react-router-dom'
 
 import Button from '../Button'
 import ImageOptimized from '../ImageOptimized'
+import { useCreateConversationMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
-import { useCreateConversationMutation } from '@/stores/conversations/conversationsApiSlice'
 import {
   addConversationWithSort,
   selectConversations
 } from '@/stores/conversations/conversationsSlice'
 import { selectFriends } from '@/stores/friends/friendsSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
+import { ErrorType } from '@/utils/types'
 
 function NewConversationDialog() {
   const navigate = useNavigate()
@@ -29,7 +30,7 @@ function NewConversationDialog() {
   const [isOpen, setIsOpen] = useState(false)
   const [friendId, setFriendId] = useState<string>('')
 
-  const [createConversation, { isLoading }] = useCreateConversationMutation()
+  const [createConversation, { loading }] = useCreateConversationMutation()
 
   function openModal() {
     setIsOpen(true)
@@ -41,11 +42,10 @@ function NewConversationDialog() {
   }
 
   const createConversationHandle = async () => {
-    if (!friendId) return
+    if (!friendId || loading) return
 
     const findConversation = conversations.find(
-      conversation =>
-        conversation.user1.id === friendId || conversation.user2.id === friendId
+      conversation => conversation.user.id === friendId
     )
 
     if (findConversation) {
@@ -54,18 +54,22 @@ function NewConversationDialog() {
       return
     }
 
-    const { data, errors } = await createConversation({
-      input: {
-        userId: friendId
+    const { data, errors: rawErrors } = await createConversation({
+      variables: {
+        input: {
+          userId: friendId
+        }
       }
-    }).unwrap()
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (!data.CreateConversation) return
+    if (!data?.CreateConversation) return
 
     const { conversation, created } = data.CreateConversation
 
@@ -171,7 +175,7 @@ function NewConversationDialog() {
                       buttonType='primary'
                       buttonSize='base'
                       widthFull
-                      isLoading={isLoading}
+                      isLoading={loading}
                       disabled={!friendId}
                       className='mt-4'
                       onClick={createConversationHandle}

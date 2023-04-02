@@ -4,10 +4,11 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import MessageContextMenu from './MessageContextMenu'
 import ImageOptimized from '../ImageOptimized'
+import { useUpdateMessageMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
-import { useUpdateMessageMutation } from '@/stores/conversation/conversationApiSlice'
 import {
+  MessageConversationStore,
   selectConversationEditMessageId,
   selectConversationId,
   selectConversationUser,
@@ -16,10 +17,10 @@ import {
 import { selectUser } from '@/stores/user/userSlice'
 import { MessageInputContext } from '@/utils/contexts/MessageInputContext'
 import { SocketContext } from '@/utils/contexts/SocketContext'
-import { Message } from '@/utils/graphqlTypes'
+import { ErrorType } from '@/utils/types'
 
 interface MessageProps {
-  message: Message
+  message: MessageConversationStore
   showUser: boolean
 }
 
@@ -36,14 +37,14 @@ function MessageComponent({ message, showUser }: MessageProps) {
 
   const [showContextMenu, setShowContextMenu] = useState<boolean>(false)
   const [targetContextMenu, setTargetContextMenu] = useState<any | null>(null)
-  const [editContent, setEditContent] = useState<string>(message.content ?? '')
+  const [editContent, setEditContent] = useState<string>(message.content)
 
   const textAreaEditRef = useRef<HTMLTextAreaElement>(null)
 
   const date = moment(message.createdAt).calendar()
   const hours = moment(message.createdAt).format('HH:mm')
 
-  const [updateMessage, { isLoading: isLoadingUpdateMessage }] =
+  const [updateMessage, { loading: loadingUpdateMessage }] =
     useUpdateMessageMutation()
 
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -76,21 +77,31 @@ function MessageComponent({ message, showUser }: MessageProps) {
   ) => {
     e.preventDefault()
 
-    if (!userConversation || !currentUser || !conversationId) return
+    if (
+      !userConversation ||
+      !currentUser ||
+      !conversationId ||
+      loadingUpdateMessage
+    )
+      return
 
     if (message.content.trim() === editContent.trim()) {
       dispatch(setConversationEditMessageId(undefined))
-      messageInputRef?.focus()
-      setEditContent(message.content ?? '')
+      messageInputRef?.current?.focus()
+      setEditContent(message.content)
       return
     }
 
-    const { data, errors } = await updateMessage({
-      input: {
-        id: message.id,
-        content: editContent
+    const { data, errors: rawErrors } = await updateMessage({
+      variables: {
+        input: {
+          id: message.id,
+          content: editContent
+        }
       }
-    }).unwrap()
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       dispatch(initInformationDialogError(errors))
@@ -107,8 +118,8 @@ function MessageComponent({ message, showUser }: MessageProps) {
     })
 
     dispatch(setConversationEditMessageId(undefined))
-    setEditContent(data.UpdateMessage.content ?? '')
-    messageInputRef?.focus()
+    setEditContent(data.UpdateMessage.content)
+    messageInputRef?.current?.focus()
   }
 
   useEffect(() => {
@@ -125,7 +136,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
       if (e.key === 'Escape') {
         dispatch(setConversationEditMessageId(undefined))
         setEditContent(message.content ?? '')
-        messageInputRef?.focus()
+        messageInputRef?.current?.focus()
       }
     }
 
@@ -191,7 +202,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
                 autoFocus
                 className='block p-2 bg-zinc-50 dark:bg-zinc-900 border-none outline-none text-base resize-none max-h-40 w-full rounded-lg'
                 value={editContent}
-                disabled={isLoadingUpdateMessage}
+                // disabled={isLoadingUpdateMessage}
                 onChange={e => {
                   setEditContent(e.target.value)
                 }}
@@ -237,6 +248,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
       </div>
 
       <MessageContextMenu
+        key={message.id}
         target={targetContextMenu}
         show={showContextMenu}
         onHide={handleHideContextMenu}

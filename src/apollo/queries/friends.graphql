@@ -1,0 +1,34 @@
+mutation SendFriendRequest($username: String!) {
+  SendFriendRequest(username: $username) {
+    id
+    username
+    avatar {
+      key
+      blurhash
+    }
+  }
+}
+
+mutation AcceptFriendRequest($id: ID!) {
+  AcceptFriendRequest(id: $id) {
+    id
+  }
+}
+
+mutation DeclineFriendRequest($id: ID!) {
+  DeclineFriendRequest(id: $id) {
+    id
+  }
+}
+
+mutation CancelFriendRequest($id: ID!) {
+  CancelFriendRequest(id: $id) {
+    id
+  }
+}
+
+mutation RemoveFriend($id: ID!) {
+  RemoveFriend(id: $id) {
+    id
+  }
+}

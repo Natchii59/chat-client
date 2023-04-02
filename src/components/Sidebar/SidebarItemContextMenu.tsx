@@ -2,24 +2,25 @@ import { useState } from 'react'
 import { usePopper } from 'react-popper'
 import { useDispatch } from 'react-redux'
 
+import { useCloseConversationMutation } from '@/apollo/generated/graphql'
 import { useCloseContextMenu } from '@/hooks/useCloseContextMenu'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
-import { useCloseConversationMutation } from '@/stores/conversations/conversationsApiSlice'
 import { removeConversation } from '@/stores/conversations/conversationsSlice'
+import { ErrorType } from '@/utils/types'
 
 interface SidebarItemContextMenuProps {
   target: HTMLElement | null
   show: boolean
   onHide: () => void
-  conversationid: string
+  conversationId: string
 }
 
 function SidebarItemContextMenu({
   target,
   show,
   onHide,
-  conversationid
+  conversationId
 }: SidebarItemContextMenuProps) {
   const dispatch = useDispatch<AppDispatch>()
 
@@ -36,15 +37,16 @@ function SidebarItemContextMenu({
     onHide
   })
 
-  const [closeConversation, { isLoading: isLoadingCloseConversation }] =
-    useCloseConversationMutation()
+  const [closeConversation, { loading }] = useCloseConversationMutation()
 
   const closeConversationHandle = async () => {
-    const { data, errors } = await closeConversation({
-      id: conversationid
-    }).unwrap()
+    const { data, errors: rawErrors } = await closeConversation({
+      variables: {
+        id: conversationId
+      }
+    })
 
-    // onHide()
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       dispatch(initInformationDialogError(errors))
@@ -54,7 +56,6 @@ function SidebarItemContextMenu({
     if (!data?.CloseConversation) return
 
     dispatch(removeConversation(data.CloseConversation.id))
-    // navigate('/')
   }
 
   if (!show) return null
@@ -69,7 +70,7 @@ function SidebarItemContextMenu({
     >
       <button
         onClick={closeConversationHandle}
-        disabled={isLoadingCloseConversation}
+        disabled={loading}
         className='text-sm font-medium py-1.5 px-2 text-red-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg'
       >
         Close conversation

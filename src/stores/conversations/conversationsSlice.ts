@@ -2,19 +2,29 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import orderBy from 'lodash/orderBy'
 
 import { RootState } from '../index'
-import { Conversation, Message } from '@/utils/graphqlTypes'
+import { Maybe, Message } from '@/apollo/generated/graphql'
 
-export type ConversationType = Conversation & {
+export type ConversationsStore = {
+  id: string
+  createdAt: Date
+  user: {
+    id: string
+    username: string
+    avatar?: Maybe<{
+      key: string
+      blurhash: string
+    }>
+  }
+  lastMessage?: Maybe<{
+    id: string
+    content: string
+    createdAt: Date
+  }>
   isTyping?: boolean
 }
 
-export interface UpdateConversationWithDeletedMessagePayload {
-  conversationId: ConversationType['id']
-  newLastMessage: Message
-}
-
 export interface ConversationsState {
-  conversations: ConversationType[]
+  conversations: ConversationsStore[]
 }
 
 const initialState: ConversationsState = {
@@ -31,12 +41,12 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversations = action.payload
     },
-    addConversation: (state, action: PayloadAction<ConversationType>) => {
+    addConversation: (state, action: PayloadAction<ConversationsStore>) => {
       state.conversations = [action.payload, ...state.conversations]
     },
     addConversationWithSort: (
       state,
-      action: PayloadAction<ConversationType>
+      action: PayloadAction<ConversationsStore>
     ) => {
       state.conversations = orderBy(
         [action.payload, ...state.conversations],
@@ -52,7 +62,7 @@ export const conversationsSlice = createSlice({
     },
     removeConversation: (
       state,
-      action: PayloadAction<ConversationType['id']>
+      action: PayloadAction<ConversationsStore['id']>
     ) => {
       state.conversations = state.conversations.filter(
         conversation => conversation.id !== action.payload
@@ -60,7 +70,7 @@ export const conversationsSlice = createSlice({
     },
     addTypingConversation: (
       state,
-      action: PayloadAction<ConversationType['id']>
+      action: PayloadAction<ConversationsStore['id']>
     ) => {
       const conversation = state.conversations.find(
         conversation => conversation.id === action.payload
@@ -71,7 +81,7 @@ export const conversationsSlice = createSlice({
     },
     removeTypingConversation: (
       state,
-      action: PayloadAction<ConversationType['id']>
+      action: PayloadAction<ConversationsStore['id']>
     ) => {
       const conversation = state.conversations.find(
         conversation => conversation.id === action.payload
@@ -101,7 +111,7 @@ export const conversationsSlice = createSlice({
     updateConversationWithUpdatedMessage: (
       state,
       action: PayloadAction<{
-        conversationId: ConversationType['id']
+        conversationId: ConversationsStore['id']
         message: Message
       }>
     ) => {
@@ -118,7 +128,10 @@ export const conversationsSlice = createSlice({
     },
     updateConversationWithDeletedMessage: (
       state,
-      action: PayloadAction<UpdateConversationWithDeletedMessagePayload>
+      action: PayloadAction<{
+        conversationId: ConversationsStore['id']
+        newLastMessage: ConversationsStore['lastMessage']
+      }>
     ) => {
       const conversation = state.conversations.find(
         conversation => conversation.id === action.payload.conversationId

@@ -2,9 +2,9 @@ import { useContext, useEffect, useState } from 'react'
 import { FaPaperPlane } from 'react-icons/fa'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { useCreateMessageMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
-import { useCreateMessageMutation } from '@/stores/conversation/conversationApiSlice'
 import {
   selectConversationId,
   selectConversationIsTyping,
@@ -13,13 +13,15 @@ import {
   setConversationEditMessageId
 } from '@/stores/conversation/conversationSlice'
 import { selectUser } from '@/stores/user/userSlice'
-import { MessageInputContext } from '@/utils/contexts/MessageInputContext'
 import { SocketContext } from '@/utils/contexts/SocketContext'
+import { ErrorType } from '@/utils/types'
 
-function MessageInput() {
+interface MessageInputProps {
+  messageInputRef: React.RefObject<HTMLTextAreaElement> | null
+}
+
+function MessageInput({ messageInputRef }: MessageInputProps) {
   const { socket } = useContext(SocketContext)
-  const { messageInputRef, setMessageInputRef } =
-    useContext(MessageInputContext)
 
   const dispatch = useDispatch<AppDispatch>()
 
@@ -34,7 +36,7 @@ function MessageInput() {
   const [timer, setTimer] = useState<ReturnType<typeof setTimeout>>()
   const [isTypingStatus, setIsTypingStatus] = useState<boolean>(false)
 
-  const [createMessage, { isLoading }] = useCreateMessageMutation()
+  const [createMessage, { loading, data }] = useCreateMessageMutation()
 
   const handleSendMessage = async (
     e:
@@ -47,23 +49,28 @@ function MessageInput() {
       !conversationId ||
       message.trim().length === 0 ||
       !currentUser ||
-      !conversationUser
+      !conversationUser ||
+      loading
     )
       return
 
-    const { data, errors } = await createMessage({
-      input: {
-        content: message.trim(),
-        conversationId
+    const { data, errors: rawErrors } = await createMessage({
+      variables: {
+        input: {
+          content: message.trim(),
+          conversationId
+        }
       }
-    }).unwrap()
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (!data.CreateMessage) return
+    if (!data?.CreateMessage) return
 
     socket.emit('createMessage', {
       message: data.CreateMessage,
@@ -71,35 +78,44 @@ function MessageInput() {
       user1Id: currentUser.id,
       user2Id: conversationUser.id
     })
+
     setMessage('')
-    messageInputRef?.focus()
   }
 
   const sendTypingStatus = () => {
     if (!isTypingStatus) {
-      socket.emit('onTypingStart', { conversationId })
+      socket.emit('onTypingStart', {
+        conversationId,
+        userId: conversationUser?.id
+      })
       setIsTypingStatus(true)
     }
 
     clearTimeout(timer)
     setTimer(
       setTimeout(() => {
-        socket.emit('onTypingStop', { conversationId })
+        socket.emit('onTypingStop', {
+          conversationId,
+          userId: conversationUser?.id
+        })
         setIsTypingStatus(false)
       }, 2000)
     )
   }
 
   useEffect(() => {
-    if (messageInputRef) {
-      messageInputRef.style.height = '0'
+    if (messageInputRef?.current) {
+      messageInputRef.current.style.height = '0'
 
-      const textAreaHeight = messageInputRef.scrollHeight
-      messageInputRef.style.height = `${textAreaHeight}px`
+      const textAreaHeight = messageInputRef.current.scrollHeight
+      messageInputRef.current.style.height = `${textAreaHeight}px`
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement === messageInputRef && e.key === 'ArrowUp') {
+      if (
+        document.activeElement === messageInputRef?.current &&
+        e.key === 'ArrowUp'
+      ) {
         e.preventDefault()
         dispatch(setConversationEditMessageId(messages[0].id))
       }
@@ -112,6 +128,12 @@ function MessageInput() {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [messageInputRef, message, messages])
+
+  useEffect(() => {
+    if (data?.CreateMessage && messageInputRef?.current) {
+      messageInputRef.current.focus()
+    }
+  }, [data, messageInputRef])
 
   return (
     <form onSubmit={handleSendMessage} className='relative w-full'>
@@ -127,12 +149,12 @@ function MessageInput() {
         }`}
       >
         <textarea
-          ref={setMessageInputRef}
+          ref={messageInputRef}
           autoFocus
           className='flex-1 p-3 bg-transparent outline-none text-base border-none resize-none h-8 max-h-40'
           placeholder={`Send a message to ${conversationUser?.username}`}
           value={message}
-          disabled={isLoading}
+          disabled={loading}
           onChange={e => {
             if (e.target.value.trim().length > 0) {
               sendTypingStatus()

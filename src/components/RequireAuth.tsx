@@ -1,7 +1,8 @@
-import { useContext, useEffect } from 'react'
+import { useContext } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
+import { useProfileQuery } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { setConversations } from '@/stores/conversations/conversationsSlice'
 import {
@@ -9,7 +10,6 @@ import {
   setReceivedRequests,
   setSentRequests
 } from '@/stores/friends/friendsSlice'
-import { useAuthenticateQuery } from '@/stores/user/authApiSlice'
 import { setUser } from '@/stores/user/userSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 
@@ -23,34 +23,18 @@ function RequireAuth() {
 
   const routesWithoutAuth = ['/sign-in', '/sign-up']
 
-  const {
-    data: dataAuth,
-    isLoading,
-    isError,
-    error
-  } = useAuthenticateQuery({} as any, {
-    skip: routesWithoutAuth.includes(location.pathname)
-  })
-
-  useEffect(() => {
-    if (isError) {
-      navigate('/error')
-      return
-    }
-
-    if (isLoading || !dataAuth) return
-
-    const { data, errors } = dataAuth
-
-    if (errors?.length || !data?.Profile) {
+  const { loading } = useProfileQuery({
+    skip: routesWithoutAuth.includes(location.pathname),
+    fetchPolicy: 'no-cache',
+    onError() {
       socket.disconnect()
 
       navigate('/sign-in', {
         replace: true,
         state: { from: location.pathname }
       })
-      return
-    } else {
+    },
+    onCompleted(data) {
       const {
         conversations,
         friends,
@@ -67,10 +51,19 @@ function RequireAuth() {
       if (sentRequests) dispatch(setSentRequests(sentRequests))
 
       socket.connect()
-    }
-  }, [dataAuth, error])
 
-  if (isLoading)
+      if (friends?.length) {
+        socket.emit('getFriendsStatus', {
+          userIds: friends.map(friend => friend.id)
+        })
+        socket.emit('onConnected', {
+          userIds: friends.map(friend => friend.id)
+        })
+      }
+    }
+  })
+
+  if (loading)
     return (
       <div className='w-full h-screen flex justify-center items-center'>
         <div className='flex flex-col w-1/3 relative'>

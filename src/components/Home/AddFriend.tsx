@@ -2,9 +2,9 @@ import { useContext, useRef, useState } from 'react'
 import { FaSpinner, FaUserPlus } from 'react-icons/fa'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { useSendFriendRequestMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
-import { useSendFriendRequestMutation } from '@/stores/friends/friendsApiSlice'
 import {
   selectFriends,
   selectReceivedRequests,
@@ -12,6 +12,7 @@ import {
 } from '@/stores/friends/friendsSlice'
 import { selectUser } from '@/stores/user/userSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
+import { ErrorType } from '@/utils/types'
 
 function AddFriend() {
   const { socket } = useContext(SocketContext)
@@ -31,13 +32,14 @@ function AddFriend() {
 
   const addFriendInputRef = useRef<HTMLInputElement>(null)
 
-  const [sendFriendRequest, { isLoading: isLoadingSendFriendRequest }] =
-    useSendFriendRequestMutation()
+  const [sendFriendRequest, { loading }] = useSendFriendRequestMutation()
 
   const sendFriendRequestHandle = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault()
+
+    if (loading) return
 
     if (addFriendUsername === currentUser?.username) {
       setAddFriendError("You can't send a friend request to yourself")
@@ -57,9 +59,13 @@ function AddFriend() {
       return
     }
 
-    const { data, errors } = await sendFriendRequest({
-      username: addFriendUsername
-    }).unwrap()
+    const { data, errors: rawErrors } = await sendFriendRequest({
+      variables: {
+        username: addFriendUsername
+      }
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       if ([400, 404].includes(errors[0].statusCode)) {
@@ -115,14 +121,14 @@ function AddFriend() {
             pattern='^[a-z0-9_]{3,}$'
             aria-describedby='add-friend-help'
             className={`px-2.5 py-2 w-full text-base bg-zinc-100 dark:bg-zinc-800 rounded-l-xl border-2 border-r-0 focus:outline-none focus:ring-0 peer disabled:cursor-not-allowed focus:invalid:border-red-500 dark:focus:invalid:border-red-500 disabled:opacity-70 border-zinc-300 dark:border-zinc-600 focus:border-blue-500 dark:focus:border-blue-500 ${
-              isLoadingSendFriendRequest ? 'pr-10' : ''
+              loading ? 'pr-10' : ''
             }`}
             value={addFriendUsername}
             onChange={updateAddFriendUsername}
-            disabled={isLoadingSendFriendRequest}
+            disabled={loading}
           />
 
-          {isLoadingSendFriendRequest ? (
+          {loading ? (
             <div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
               <FaSpinner className='animate-spin' />
             </div>
@@ -131,7 +137,7 @@ function AddFriend() {
 
         <button
           type='submit'
-          disabled={isLoadingSendFriendRequest}
+          disabled={loading}
           className='font-bold rounded-r-xl border-2 disabled:cursor-not-allowed outline-none flex items-center justify-center bg-blue-400 hover:bg-blue-400/90 focus:bg-blue-400/90 text-zinc-50 border-blue-500 text-sm w-11 h-11'
         >
           <FaUserPlus />

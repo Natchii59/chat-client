@@ -1,0 +1,74 @@
+fragment UserFragment on User {
+  id
+  username
+  createdAt
+  avatar {
+    key
+    blurhash
+  }
+  conversations {
+    id
+    createdAt
+    user {
+      id
+      username
+      avatar {
+        key
+        blurhash
+      }
+    }
+    lastMessage {
+      id
+      content
+      createdAt
+    }
+  }
+  friends {
+    id
+    username
+    avatar {
+      key
+      blurhash
+    }
+  }
+  receivedRequests {
+    id
+    username
+    avatar {
+      key
+      blurhash
+    }
+  }
+  sentRequests {
+    id
+    username
+    avatar {
+      key
+      blurhash
+    }
+  }
+}
+
+query Profile {
+  Profile {
+    ...UserFragment
+  }
+}
+
+mutation SignIn($username: String!, $password: String!) {
+  SignIn(username: $username, password: $password) {
+    ...UserFragment
+  }
+}
+
+mutation SignUp($input: CreateUserInput!) {
+  SignUp(input: $input) {
+    id
+    username
+    createdAt
+    avatar {
+      key
+      blurhash
+    }
+  }
+}

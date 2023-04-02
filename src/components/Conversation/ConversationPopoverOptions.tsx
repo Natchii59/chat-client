@@ -6,11 +6,12 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
 import Button from '../Button'
+import { useCloseConversationMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
 import { selectConversationId } from '@/stores/conversation/conversationSlice'
-import { useCloseConversationMutation } from '@/stores/conversations/conversationsApiSlice'
 import { removeConversation } from '@/stores/conversations/conversationsSlice'
+import { ErrorType } from '@/utils/types'
 
 function ConversationPopoverOptions() {
   const navigate = useNavigate()
@@ -34,21 +35,25 @@ function ConversationPopoverOptions() {
     ]
   })
 
-  const [closeConversation, { isLoading }] = useCloseConversationMutation()
+  const [closeConversation, { loading }] = useCloseConversationMutation()
 
   const closeConversationHandle = async () => {
-    if (!conversationId) return
+    if (!conversationId || loading) return
 
-    const { data, errors } = await closeConversation({
-      id: conversationId
-    }).unwrap()
+    const { data, errors: rawErrors } = await closeConversation({
+      variables: {
+        id: conversationId
+      }
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (!data.CloseConversation) return
+    if (!data?.CloseConversation) return
 
     dispatch(removeConversation(data.CloseConversation.id))
     navigate('/')
@@ -74,7 +79,7 @@ function ConversationPopoverOptions() {
       >
         <button
           onClick={closeConversationHandle}
-          disabled={isLoading}
+          disabled={loading}
           className='text-sm font-medium py-1.5 px-2 text-red-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg'
         >
           Close conversation

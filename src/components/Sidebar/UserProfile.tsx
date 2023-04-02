@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import ImageOptimized from '../ImageOptimized'
 import { AppDispatch } from '@/stores'
 import { selectConversationId } from '@/stores/conversation/conversationSlice'
-import { logout, selectUser } from '@/stores/user/userSlice'
+import { selectUser, setUser } from '@/stores/user/userSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 
 function UserProfile() {
@@ -37,7 +37,7 @@ function UserProfile() {
   })
 
   const logoutHandle = () => {
-    dispatch(logout())
+    dispatch(setUser(undefined))
 
     if (conversationId) socket.emit('onConversationLeave', { conversationId })
 

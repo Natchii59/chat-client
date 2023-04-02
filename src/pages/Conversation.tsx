@@ -1,12 +1,12 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { useFindOneConversationQuery } from '@/apollo/generated/graphql'
 import ConversationPopoverOptions from '@/components/Conversation/ConversationPopoverOptions'
 import MessageInput from '@/components/Conversation/MessageInput'
 import MessagesList from '@/components/Conversation/MessagesList'
 import { AppDispatch } from '@/stores'
-import { useConversationQuery } from '@/stores/conversation/conversationApiSlice'
 import {
   selectConversationUser,
   setConversationId,
@@ -16,7 +16,6 @@ import {
   setConversationUser
 } from '@/stores/conversation/conversationSlice'
 import { removeTypingConversation } from '@/stores/conversations/conversationsSlice'
-import { selectUser } from '@/stores/user/userSlice'
 import { MessageInputContext } from '@/utils/contexts/MessageInputContext'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 
@@ -29,68 +28,48 @@ function Conversation() {
 
   const dispatch = useDispatch<AppDispatch>()
 
-  const currentUser = useSelector(selectUser)
   const userConversation = useSelector(selectConversationUser)
 
-  const [messageInputRef, setMessageInputRef] =
-    useState<HTMLTextAreaElement | null>(null)
+  const messageInputRef = useRef<HTMLTextAreaElement>(null)
 
-  const { data: dataConversation, isLoading } = useConversationQuery(
-    {
-      id: id
+  const { data, loading } = useFindOneConversationQuery({
+    variables: {
+      id: id ?? ''
     },
-    {
-      skip: !id
+    skip: !id,
+    onError: () => {
+      navigate('/', { replace: true })
     }
-  )
+  })
 
   useEffect(() => {
-    if (!dataConversation?.data.FindOneConversation) return
+    if (!data?.FindOneConversation) return
+
+    dispatch(setConversationId(data.FindOneConversation.id))
+    dispatch(setConversationUser(data.FindOneConversation.user))
+    dispatch(setConversationIsTyping(false))
+    dispatch(removeTypingConversation(data.FindOneConversation.id))
 
     socket.emit('onConversationJoin', { conversationId: id })
 
-    return () => {
-      socket.emit('onConversationLeave', { conversationId: id })
-    }
-  }, [dataConversation])
-
-  useEffect(() => {
-    if (!dataConversation) return
-
-    const { errors, data } = dataConversation
-
-    if (errors?.length || !data.FindOneConversation) {
-      navigate('/', { replace: true })
-      return
-    }
-
-    dispatch(setConversationId(data.FindOneConversation.id))
-    dispatch(
-      setConversationUser(
-        data.FindOneConversation.user1.id === currentUser?.id
-          ? data.FindOneConversation.user2
-          : data.FindOneConversation.user1
-      )
-    )
-    dispatch(setConversationIsTyping(false))
-    dispatch(removeTypingConversation(data.FindOneConversation.id))
+    messageInputRef?.current?.focus()
 
     return () => {
       dispatch(setConversationId(undefined))
       dispatch(setConversationUser(undefined))
       dispatch(setConversationMessages([]))
       dispatch(setConversationTotalCount(undefined))
-    }
-  }, [dataConversation])
 
-  if (isLoading) {
+      socket.emit('onConversationLeave', { conversationId: id })
+    }
+  }, [data])
+
+  if (loading) {
     return <SkeletonLoader />
   }
 
   return (
-    <MessageInputContext.Provider
-      value={{ messageInputRef, setMessageInputRef }}
-    >
+    <MessageInputContext.Provider value={{ messageInputRef }}>
       <div className='flex flex-col items-start h-screen p-2'>
         <div className='w-full px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-between'>
           <p className='text-lg font-extrabold'>{userConversation?.username}</p>
@@ -100,7 +79,7 @@ function Conversation() {
 
         <MessagesList />
 
-        <MessageInput />
+        <MessageInput messageInputRef={messageInputRef} />
       </div>
     </MessageInputContext.Provider>
   )

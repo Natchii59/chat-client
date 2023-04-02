@@ -4,11 +4,12 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import Button from '../Button'
 import ImageOptimized from '../ImageOptimized'
+import { useCancelFriendRequestMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
-import { useCancelFriendRequestMutation } from '@/stores/friends/friendsApiSlice'
 import { selectSentRequests } from '@/stores/friends/friendsSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
+import { ErrorType } from '@/utils/types'
 
 function SentRequests() {
   const { socket } = useContext(SocketContext)
@@ -17,18 +18,25 @@ function SentRequests() {
 
   const sentRequests = useSelector(selectSentRequests)
 
-  const [cancelFriendRequest, { isLoading: isLoadingCancelFriendRequest }] =
-    useCancelFriendRequestMutation()
+  const [cancelFriendRequest, { loading }] = useCancelFriendRequestMutation()
 
   const cancelFriendRequestHandle = async (id: string) => {
-    const { data, errors } = await cancelFriendRequest({ id }).unwrap()
+    if (loading) return
+
+    const { data, errors: rawErrors } = await cancelFriendRequest({
+      variables: {
+        id
+      }
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (!data.CancelFriendRequest) return
+    if (!data?.CancelFriendRequest) return
 
     socket.emit('cancelFriendRequest', { userId: data.CancelFriendRequest.id })
   }
@@ -65,7 +73,7 @@ function SentRequests() {
               buttonSize='sm'
               square
               icon={<FaUserTimes />}
-              isLoading={isLoadingCancelFriendRequest}
+              isLoading={loading}
               onClick={() => cancelFriendRequestHandle(request.id)}
             />
           </div>

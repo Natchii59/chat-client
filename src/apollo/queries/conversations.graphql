@@ -1,0 +1,28 @@
+mutation CreateConversation($input: CreateConversationInput!) {
+  CreateConversation(input: $input) {
+    created
+    conversation {
+      id
+      createdAt
+      user {
+        id
+        username
+        avatar {
+          key
+          blurhash
+        }
+      }
+      lastMessage {
+        id
+        content
+        createdAt
+      }
+    }
+  }
+}
+
+mutation CloseConversation($id: ID!) {
+  CloseConversation(id: $id) {
+    id
+  }
+}

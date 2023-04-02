@@ -1,0 +1,70 @@
+fragment MessageConversation on Message {
+  id
+  content
+  createdAt
+  isModified
+  user {
+    id
+    username
+    avatar {
+      key
+      blurhash
+    }
+  }
+}
+
+query FindOneConversation($id: ID!) {
+  FindOneConversation(id: $id) {
+    id
+    user {
+      id
+      username
+      avatar {
+        key
+        blurhash
+      }
+    }
+  }
+}
+
+query PaginationMessage(
+  $skip: Int!
+  $take: Int!
+  $where: [PaginationMessageWhere]
+  $sortBy: PaginationSortBy
+) {
+  PaginationMessage(skip: $skip, take: $take, where: $where, sortBy: $sortBy) {
+    totalCount
+    nodes {
+      ...MessageConversation
+    }
+  }
+}
+
+mutation CreateMessage($input: CreateMessageInput!) {
+  CreateMessage(input: $input) {
+    ...MessageConversation
+    conversation {
+      id
+      createdAt
+      user {
+        id
+        username
+        avatar {
+          key
+          blurhash
+        }
+      }
+    }
+  }
+}
+
+mutation UpdateMessage($input: UpdateMessageInput!) {
+  UpdateMessage(input: $input) {
+    ...MessageConversation
+  }
+}
+
+mutation DeleteMessage($id: ID!) {
+  DeleteMessage(id: $id)
+}

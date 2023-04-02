@@ -1,0 +1,11 @@
+mutation UpdateUser($input: UpdateUserInput!) {
+  UpdateUser(input: $input) {
+    id
+    username
+    createdAt
+    avatar {
+      key
+      blurhash
+    }
+  }
+}

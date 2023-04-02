@@ -5,10 +5,10 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import Button from '../Button'
 import InputForm from '../InputForm'
+import { useUpdateUserMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
-import { useUpdateUserMutation } from '@/stores/user/userApiSlice'
 import { selectUser, setUser } from '@/stores/user/userSlice'
-import { ErrorMessage } from '@/utils/types'
+import { ErrorMessage, ErrorType } from '@/utils/types'
 
 function Profile() {
   const dispatch = useDispatch<AppDispatch>()
@@ -30,8 +30,13 @@ function Profile() {
 
   const profilePictureInputRef = useRef<HTMLInputElement>(null)
 
-  const [updateUser, { isLoading: isLoadingUpdateUser }] =
-    useUpdateUserMutation()
+  const [updateUser, { loading: loadingUpdateUser }] = useUpdateUserMutation({
+    context: {
+      headers: {
+        'Apollo-Require-Preflight': 'true'
+      }
+    }
+  })
 
   const addIsModified = (key: string) => {
     if (!isModified.includes(key)) setIsModified(prev => [...prev, key])
@@ -130,13 +135,17 @@ function Profile() {
       return
     }
 
-    const { data, errors } = await updateUser({
-      input: {
-        username: username === currentUser?.username ? undefined : username,
-        password: newPassword.length ? newPassword : undefined,
-        avatar: selectedProfilePicture ?? undefined
+    const { data, errors: rawErrors } = await updateUser({
+      variables: {
+        input: {
+          username: username === currentUser?.username ? undefined : username,
+          password: newPassword.length ? newPassword : undefined,
+          avatar: selectedProfilePicture ?? undefined
+        }
       }
-    }).unwrap()
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors && errors[0].statusCode === 400) {
       if (newPassword && confirmNewPassword) setConfirmNewPassword('')
@@ -229,7 +238,7 @@ function Profile() {
             type='file'
             accept='image/*'
             multiple={false}
-            disabled={isLoadingUpdateUser}
+            disabled={loadingUpdateUser}
             className='hidden'
             onChange={handleSetProfilePicture}
           />
@@ -237,7 +246,7 @@ function Profile() {
           <div className='relative'>
             <button
               type='button'
-              disabled={isLoadingUpdateUser}
+              disabled={loadingUpdateUser}
               onClick={() => profilePictureInputRef.current?.click()}
               className={`group rounded-full relative w-40 h-40 overflow-hidden ${
                 errors.find(error => error.code === 'profilePicture')
@@ -309,7 +318,7 @@ function Profile() {
                 buttonSize='sm'
                 buttonType='secondary'
                 onClick={resetForm}
-                disabled={isLoadingUpdateUser}
+                disabled={loadingUpdateUser}
               >
                 Discard
               </Button>
@@ -318,7 +327,7 @@ function Profile() {
                 buttonSize='sm'
                 buttonType='primary'
                 type='submit'
-                isLoading={isLoadingUpdateUser}
+                isLoading={loadingUpdateUser}
                 disabled={
                   newPassword.length > 0 && newPassword !== confirmNewPassword
                 }

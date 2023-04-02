@@ -5,8 +5,11 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
 import MessageComponent from './Message'
+import {
+  SortDirection,
+  usePaginationMessageQuery
+} from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
-import { useConversationMessagesQuery } from '@/stores/conversation/conversationApiSlice'
 import {
   selectConversationId,
   selectConversationMessages,
@@ -14,7 +17,6 @@ import {
   setConversationMessages,
   setConversationTotalCount
 } from '@/stores/conversation/conversationSlice'
-import { SortDirection } from '@/utils/graphqlTypes'
 
 function MessagesList() {
   const navigate = useNavigate()
@@ -29,8 +31,8 @@ function MessagesList() {
   const SKIP = 0
   const [createdAt, setCreatedAt] = useState<Date | undefined>(undefined)
 
-  const { data: dataMessages, isLoading } = useConversationMessagesQuery(
-    {
+  const { data, loading } = usePaginationMessageQuery({
+    variables: {
       skip: SKIP,
       take: TAKE,
       where: [
@@ -43,12 +45,14 @@ function MessagesList() {
         createdAt: SortDirection.Desc
       }
     },
-    {
-      skip: !conversationId
+    skip: !conversationId,
+    fetchPolicy: 'no-cache',
+    onError: () => {
+      navigate('/', { replace: true })
     }
-  )
+  })
 
-  const loadMore = useCallback(() => {
+  const loadMore = useCallback(async () => {
     if (totalCount && messages.length >= totalCount) return
 
     const { createdAt } = messages[messages.length - 1]
@@ -57,14 +61,11 @@ function MessagesList() {
   }, [messages, totalCount])
 
   useEffect(() => {
-    if (!dataMessages) return
+    setCreatedAt(undefined)
+  }, [conversationId])
 
-    const { errors, data } = dataMessages
-
-    if (errors?.length || !data.PaginationMessage) {
-      navigate('/', { replace: true })
-      return
-    }
+  useEffect(() => {
+    if (!data?.PaginationMessage) return
 
     const messagesFetched = [...messages, ...data.PaginationMessage.nodes]
 
@@ -73,9 +74,9 @@ function MessagesList() {
     }
 
     dispatch(setConversationMessages(messagesFetched))
-  }, [dataMessages])
+  }, [data])
 
-  if (isLoading) return <SkeletonLoader />
+  if (loading && !createdAt) return <SkeletonLoader />
 
   return (
     <div

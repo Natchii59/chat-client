@@ -4,14 +4,15 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import Button from '../Button'
 import ImageOptimized from '../ImageOptimized'
-import { AppDispatch } from '@/stores'
-import { initInformationDialogError } from '@/stores/app/appSlice'
 import {
   useAcceptFriendRequestMutation,
   useDeclineFriendRequestMutation
-} from '@/stores/friends/friendsApiSlice'
+} from '@/apollo/generated/graphql'
+import { AppDispatch } from '@/stores'
+import { initInformationDialogError } from '@/stores/app/appSlice'
 import { selectReceivedRequests } from '@/stores/friends/friendsSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
+import { ErrorType } from '@/utils/types'
 
 function ReceivedRequests() {
   const { socket } = useContext(SocketContext)
@@ -20,34 +21,50 @@ function ReceivedRequests() {
 
   const receivedRequests = useSelector(selectReceivedRequests)
 
-  const [acceptFriendRequest, { isLoading: isLoadingAcceptFriendRequest }] =
+  const [acceptFriendRequest, { loading: loadingAcceptFriendRequest }] =
     useAcceptFriendRequestMutation()
 
-  const [declineFriendRequest, { isLoading: isLoadingDeclineFriendRequest }] =
+  const [declineFriendRequest, { loading: loadingDeclineFriendRequest }] =
     useDeclineFriendRequestMutation()
 
   const acceptFriendRequestHandle = async (id: string) => {
-    const { data, errors } = await acceptFriendRequest({ id }).unwrap()
+    if (loadingAcceptFriendRequest || loadingDeclineFriendRequest) return
+
+    const { data, errors: rawErrors } = await acceptFriendRequest({
+      variables: {
+        id
+      }
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (!data.AcceptFriendRequest) return
+    if (!data?.AcceptFriendRequest) return
 
     socket.emit('acceptFriendRequest', { userId: data.AcceptFriendRequest.id })
   }
 
   const declineFriendRequestHandle = async (id: string) => {
-    const { data, errors } = await declineFriendRequest({ id }).unwrap()
+    if (loadingAcceptFriendRequest || loadingDeclineFriendRequest) return
+
+    const { data, errors: rawErrors } = await declineFriendRequest({
+      variables: {
+        id
+      }
+    })
+
+    const errors = rawErrors as unknown as ErrorType[]
 
     if (errors) {
       dispatch(initInformationDialogError(errors))
       return
     }
 
-    if (!data.DeclineFriendRequest) return
+    if (!data?.DeclineFriendRequest) return
 
     socket.emit('declineFriendRequest', {
       userId: data.DeclineFriendRequest.id
@@ -86,8 +103,8 @@ function ReceivedRequests() {
               buttonSize='sm'
               square
               icon={<FaUserCheck />}
-              isLoading={isLoadingAcceptFriendRequest}
-              disabled={isLoadingDeclineFriendRequest}
+              isLoading={loadingAcceptFriendRequest}
+              disabled={loadingDeclineFriendRequest}
               onClick={() => acceptFriendRequestHandle(request.id)}
             />
 
@@ -96,8 +113,8 @@ function ReceivedRequests() {
               buttonSize='sm'
               square
               icon={<FaUserTimes />}
-              isLoading={isLoadingDeclineFriendRequest}
-              disabled={isLoadingAcceptFriendRequest}
+              isLoading={loadingDeclineFriendRequest}
+              disabled={loadingAcceptFriendRequest}
               onClick={() => declineFriendRequestHandle(request.id)}
             />
           </div>
