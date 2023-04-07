@@ -20,14 +20,15 @@ export type Scalars = {
 export type Conversation = {
   /** Date and time when the resource was created. */
   createdAt: Scalars['DateTime'];
+  /** Get the creator of the conversation. */
+  creator: UserConversation;
   /** Unique identifier for the resource. */
   id: Scalars['ID'];
-  /** Get the last message of the conversation. */
-  lastMessage?: Maybe<Message>;
+  lastMessageSentAt?: Maybe<Scalars['DateTime']>;
+  /** Get the recipient of the conversation. */
+  recipient: UserConversation;
   /** Date and time when the resource was last updated. */
   updatedAt: Scalars['DateTime'];
-  /** Get the other user of the conversation. */
-  user: User;
 };
 
 export type CreateConversationInput = {
@@ -87,6 +88,8 @@ export type Message = {
   id: Scalars['ID'];
   /** Whether the message is modified */
   isModified: Scalars['Boolean'];
+  /** Ids of users who have not read the message */
+  unreadByIds: Array<Scalars['ID']>;
   /** Date and time when the resource was last updated. */
   updatedAt: Scalars['DateTime'];
   /** The user who created the message. */
@@ -112,6 +115,8 @@ export type Mutation = {
   DeleteMessage: Scalars['ID'];
   /** Delete a user */
   DeleteUser: User;
+  /** Read messages in a conversation. */
+  ReadMessages: Array<Scalars['String']>;
   /** Refresh Tokens of current user */
   RefreshTokens: TokensOutput;
   /** Remove a friend */
@@ -166,6 +171,11 @@ export type MutationDeleteConversationArgs = {
 
 export type MutationDeleteMessageArgs = {
   id: Scalars['ID'];
+};
+
+
+export type MutationReadMessagesArgs = {
+  conversationId: Scalars['ID'];
 };
 
 
@@ -234,6 +244,14 @@ export type Query = {
   PaginationMessage: PaginationMessage;
   /** Get current user */
   Profile: User;
+  /** Find all conversations for user. */
+  UserConversations: Array<Conversation>;
+  /** Get all friends of a user */
+  UserFriends: Array<User>;
+  /** Get all received requests of a user */
+  UserReceivedRequestsFriends: Array<User>;
+  /** Get all sent requests of a user */
+  UserSentRequestsFriends: Array<User>;
 };
 
 
@@ -273,7 +291,7 @@ export type TokensOutput = {
 
 export type UpdateMessageInput = {
   /** Content of the message */
-  content: Scalars['String'];
+  content?: InputMaybe<Scalars['String']>;
   /** ID of the message */
   id: Scalars['ID'];
 };
@@ -290,30 +308,41 @@ export type UpdateUserInput = {
 export type User = {
   /** Avatar of a user */
   avatar?: Maybe<Image>;
-  /** Get all conversations of a user */
-  conversations?: Maybe<Array<Conversation>>;
   /** Date and time when the resource was created. */
   createdAt: Scalars['DateTime'];
-  /** Get all friends of a user */
-  friends?: Maybe<Array<User>>;
   /** Unique identifier for the resource. */
   id: Scalars['ID'];
-  /** Get all received requests of a user */
-  receivedRequests?: Maybe<Array<User>>;
-  /** Get all sent requests of a user */
-  sentRequests?: Maybe<Array<User>>;
   /** Date and time when the resource was last updated. */
   updatedAt: Scalars['DateTime'];
   /** Username of user */
   username: Scalars['String'];
 };
 
-export type UserFragmentFragment = { id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null, conversations?: Array<{ id: string, createdAt: any, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null }, lastMessage?: { id: string, content: string, createdAt: any } | null }> | null, friends?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null, receivedRequests?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null, sentRequests?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null };
+export type UserConversation = {
+  /** Avatar of a user */
+  avatar?: Maybe<Image>;
+  /** Date and time when the resource was created. */
+  createdAt: Scalars['DateTime'];
+  /** Get the id of the first unread message of the conversation. */
+  firstUnreadMessageId?: Maybe<Scalars['ID']>;
+  /** Unique identifier for the resource. */
+  id: Scalars['ID'];
+  /** Get the count of unread messages of the conversation. */
+  unreadMessagesCount: Scalars['Float'];
+  /** Date and time when the resource was last updated. */
+  updatedAt: Scalars['DateTime'];
+  /** Username of user */
+  username: Scalars['String'];
+};
 
-export type ProfileQueryVariables = Exact<{ [key: string]: never; }>;
+export type UserFragmentFragment = { id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null };
+
+export type UserConversationFragmentFragment = { id: string, username: string, createdAt: any, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null };
+
+export type AuthenticatedUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ProfileQuery = { Profile: { id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null, conversations?: Array<{ id: string, createdAt: any, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null }, lastMessage?: { id: string, content: string, createdAt: any } | null }> | null, friends?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null, receivedRequests?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null, sentRequests?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null } };
+export type AuthenticatedUserQuery = { Profile: { id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null }, UserConversations: Array<{ id: string, createdAt: any, creator: { id: string, username: string, createdAt: any, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null }, recipient: { id: string, username: string, createdAt: any, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null } }>, UserFriends: Array<{ id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null }>, UserReceivedRequestsFriends: Array<{ id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null }>, UserSentRequestsFriends: Array<{ id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null }> };
 
 export type SignInMutationVariables = Exact<{
   username: Scalars['String'];
@@ -321,7 +350,7 @@ export type SignInMutationVariables = Exact<{
 }>;
 
 
-export type SignInMutation = { SignIn: { id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null, conversations?: Array<{ id: string, createdAt: any, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null }, lastMessage?: { id: string, content: string, createdAt: any } | null }> | null, friends?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null, receivedRequests?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null, sentRequests?: Array<{ id: string, username: string, avatar?: { key: string, blurhash: string } | null }> | null } };
+export type SignInMutation = { SignIn: { id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null } };
 
 export type SignUpMutationVariables = Exact<{
   input: CreateUserInput;
@@ -330,14 +359,16 @@ export type SignUpMutationVariables = Exact<{
 
 export type SignUpMutation = { SignUp: { id: string, username: string, createdAt: any, avatar?: { key: string, blurhash: string } | null } };
 
-export type MessageConversationFragment = { id: string, content: string, createdAt: any, isModified: boolean, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } };
+export type ConversationFragment = { id: string, createdAt: any, creator: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null }, recipient: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null } };
+
+export type MessageConversationFragment = { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } };
 
 export type FindOneConversationQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type FindOneConversationQuery = { FindOneConversation?: { id: string, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } | null };
+export type FindOneConversationQuery = { FindOneConversation?: { id: string, createdAt: any, creator: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null }, recipient: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null } } | null };
 
 export type PaginationMessageQueryVariables = Exact<{
   skip: Scalars['Int'];
@@ -347,21 +378,21 @@ export type PaginationMessageQueryVariables = Exact<{
 }>;
 
 
-export type PaginationMessageQuery = { PaginationMessage: { totalCount: number, nodes: Array<{ id: string, content: string, createdAt: any, isModified: boolean, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } }> } };
+export type PaginationMessageQuery = { PaginationMessage: { totalCount: number, nodes: Array<{ id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } }> } };
 
 export type CreateMessageMutationVariables = Exact<{
   input: CreateMessageInput;
 }>;
 
 
-export type CreateMessageMutation = { CreateMessage: { id: string, content: string, createdAt: any, isModified: boolean, conversation: { id: string, createdAt: any, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } }, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } };
+export type CreateMessageMutation = { CreateMessage: { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, conversation: { id: string, createdAt: any, creator: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null }, recipient: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null } }, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } };
 
 export type UpdateMessageMutationVariables = Exact<{
   input: UpdateMessageInput;
 }>;
 
 
-export type UpdateMessageMutation = { UpdateMessage: { id: string, content: string, createdAt: any, isModified: boolean, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } };
+export type UpdateMessageMutation = { UpdateMessage: { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, conversation: { id: string }, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } };
 
 export type DeleteMessageMutationVariables = Exact<{
   id: Scalars['ID'];
@@ -370,12 +401,19 @@ export type DeleteMessageMutationVariables = Exact<{
 
 export type DeleteMessageMutation = { DeleteMessage: string };
 
+export type ReadMessagesMutationVariables = Exact<{
+  conversationId: Scalars['ID'];
+}>;
+
+
+export type ReadMessagesMutation = { ReadMessages: Array<string> };
+
 export type CreateConversationMutationVariables = Exact<{
   input: CreateConversationInput;
 }>;
 
 
-export type CreateConversationMutation = { CreateConversation: { created: boolean, conversation: { id: string, createdAt: any, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null }, lastMessage?: { id: string, content: string, createdAt: any } | null } } };
+export type CreateConversationMutation = { CreateConversation: { created: boolean, conversation: { id: string, createdAt: any, lastMessageSentAt?: any | null, creator: { id: string, username: string, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null }, recipient: { id: string, username: string, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null } } } };
 
 export type CloseConversationMutationVariables = Exact<{
   id: Scalars['ID'];
@@ -435,46 +473,43 @@ export const UserFragmentFragmentDoc = gql`
     key
     blurhash
   }
-  conversations {
-    id
-    createdAt
-    user {
-      id
-      username
-      avatar {
-        key
-        blurhash
-      }
-    }
-    lastMessage {
-      id
-      content
-      createdAt
-    }
+}
+    `;
+export const UserConversationFragmentFragmentDoc = gql`
+    fragment UserConversationFragment on UserConversation {
+  id
+  username
+  createdAt
+  avatar {
+    key
+    blurhash
   }
-  friends {
+  unreadMessagesCount
+}
+    `;
+export const ConversationFragmentDoc = gql`
+    fragment Conversation on Conversation {
+  id
+  createdAt
+  creator {
     id
     username
     avatar {
       key
       blurhash
     }
+    firstUnreadMessageId
+    unreadMessagesCount
   }
-  receivedRequests {
+  recipient {
     id
     username
     avatar {
       key
       blurhash
     }
-  }
-  sentRequests {
-    id
-    username
-    avatar {
-      key
-      blurhash
-    }
+    firstUnreadMessageId
+    unreadMessagesCount
   }
 }
     `;
@@ -484,6 +519,7 @@ export const MessageConversationFragmentDoc = gql`
   content
   createdAt
   isModified
+  unreadByIds
   user {
     id
     username
@@ -494,40 +530,60 @@ export const MessageConversationFragmentDoc = gql`
   }
 }
     `;
-export const ProfileDocument = gql`
-    query Profile {
+export const AuthenticatedUserDocument = gql`
+    query AuthenticatedUser {
   Profile {
     ...UserFragment
   }
+  UserConversations {
+    id
+    createdAt
+    creator {
+      ...UserConversationFragment
+    }
+    recipient {
+      ...UserConversationFragment
+    }
+  }
+  UserFriends {
+    ...UserFragment
+  }
+  UserReceivedRequestsFriends {
+    ...UserFragment
+  }
+  UserSentRequestsFriends {
+    ...UserFragment
+  }
 }
-    ${UserFragmentFragmentDoc}`;
+    ${UserFragmentFragmentDoc}
+${UserConversationFragmentFragmentDoc}`;
 
 /**
- * __useProfileQuery__
+ * __useAuthenticatedUserQuery__
  *
- * To run a query within a React component, call `useProfileQuery` and pass it any options that fit your needs.
- * When your component renders, `useProfileQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useAuthenticatedUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAuthenticatedUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useProfileQuery({
+ * const { data, loading, error } = useAuthenticatedUserQuery({
  *   variables: {
  *   },
  * });
  */
-export function useProfileQuery(baseOptions?: Apollo.QueryHookOptions<ProfileQuery, ProfileQueryVariables>) {
+export function useAuthenticatedUserQuery(baseOptions?: Apollo.QueryHookOptions<AuthenticatedUserQuery, AuthenticatedUserQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ProfileQuery, ProfileQueryVariables>(ProfileDocument, options);
+        return Apollo.useQuery<AuthenticatedUserQuery, AuthenticatedUserQueryVariables>(AuthenticatedUserDocument, options);
       }
-export function useProfileLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProfileQuery, ProfileQueryVariables>) {
+export function useAuthenticatedUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AuthenticatedUserQuery, AuthenticatedUserQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ProfileQuery, ProfileQueryVariables>(ProfileDocument, options);
+          return Apollo.useLazyQuery<AuthenticatedUserQuery, AuthenticatedUserQueryVariables>(AuthenticatedUserDocument, options);
         }
-export type ProfileQueryHookResult = ReturnType<typeof useProfileQuery>;
-export type ProfileLazyQueryHookResult = ReturnType<typeof useProfileLazyQuery>;
-export type ProfileQueryResult = Apollo.QueryResult<ProfileQuery, ProfileQueryVariables>;
+export type AuthenticatedUserQueryHookResult = ReturnType<typeof useAuthenticatedUserQuery>;
+export type AuthenticatedUserLazyQueryHookResult = ReturnType<typeof useAuthenticatedUserLazyQuery>;
+export type AuthenticatedUserQueryResult = Apollo.QueryResult<AuthenticatedUserQuery, AuthenticatedUserQueryVariables>;
 export const SignInDocument = gql`
     mutation SignIn($username: String!, $password: String!) {
   SignIn(username: $username, password: $password) {
@@ -604,18 +660,10 @@ export type SignUpMutationOptions = Apollo.BaseMutationOptions<SignUpMutation, S
 export const FindOneConversationDocument = gql`
     query FindOneConversation($id: ID!) {
   FindOneConversation(id: $id) {
-    id
-    user {
-      id
-      username
-      avatar {
-        key
-        blurhash
-      }
-    }
+    ...Conversation
   }
 }
-    `;
+    ${ConversationFragmentDoc}`;
 
 /**
  * __useFindOneConversationQuery__
@@ -690,20 +738,12 @@ export const CreateMessageDocument = gql`
   CreateMessage(input: $input) {
     ...MessageConversation
     conversation {
-      id
-      createdAt
-      user {
-        id
-        username
-        avatar {
-          key
-          blurhash
-        }
-      }
+      ...Conversation
     }
   }
 }
-    ${MessageConversationFragmentDoc}`;
+    ${MessageConversationFragmentDoc}
+${ConversationFragmentDoc}`;
 export type CreateMessageMutationFn = Apollo.MutationFunction<CreateMessageMutation, CreateMessageMutationVariables>;
 
 /**
@@ -734,6 +774,9 @@ export const UpdateMessageDocument = gql`
     mutation UpdateMessage($input: UpdateMessageInput!) {
   UpdateMessage(input: $input) {
     ...MessageConversation
+    conversation {
+      id
+    }
   }
 }
     ${MessageConversationFragmentDoc}`;
@@ -794,6 +837,37 @@ export function useDeleteMessageMutation(baseOptions?: Apollo.MutationHookOption
 export type DeleteMessageMutationHookResult = ReturnType<typeof useDeleteMessageMutation>;
 export type DeleteMessageMutationResult = Apollo.MutationResult<DeleteMessageMutation>;
 export type DeleteMessageMutationOptions = Apollo.BaseMutationOptions<DeleteMessageMutation, DeleteMessageMutationVariables>;
+export const ReadMessagesDocument = gql`
+    mutation ReadMessages($conversationId: ID!) {
+  ReadMessages(conversationId: $conversationId)
+}
+    `;
+export type ReadMessagesMutationFn = Apollo.MutationFunction<ReadMessagesMutation, ReadMessagesMutationVariables>;
+
+/**
+ * __useReadMessagesMutation__
+ *
+ * To run a mutation, you first call `useReadMessagesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReadMessagesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [readMessagesMutation, { data, loading, error }] = useReadMessagesMutation({
+ *   variables: {
+ *      conversationId: // value for 'conversationId'
+ *   },
+ * });
+ */
+export function useReadMessagesMutation(baseOptions?: Apollo.MutationHookOptions<ReadMessagesMutation, ReadMessagesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ReadMessagesMutation, ReadMessagesMutationVariables>(ReadMessagesDocument, options);
+      }
+export type ReadMessagesMutationHookResult = ReturnType<typeof useReadMessagesMutation>;
+export type ReadMessagesMutationResult = Apollo.MutationResult<ReadMessagesMutation>;
+export type ReadMessagesMutationOptions = Apollo.BaseMutationOptions<ReadMessagesMutation, ReadMessagesMutationVariables>;
 export const CreateConversationDocument = gql`
     mutation CreateConversation($input: CreateConversationInput!) {
   CreateConversation(input: $input) {
@@ -801,18 +875,24 @@ export const CreateConversationDocument = gql`
     conversation {
       id
       createdAt
-      user {
+      lastMessageSentAt
+      creator {
         id
         username
         avatar {
           key
           blurhash
         }
+        unreadMessagesCount
       }
-      lastMessage {
+      recipient {
         id
-        content
-        createdAt
+        username
+        avatar {
+          key
+          blurhash
+        }
+        unreadMessagesCount
       }
     }
   }

@@ -6,12 +6,6 @@ import { useSignInMutation } from '@/apollo/generated/graphql'
 import Button from '@/components/Button'
 import InputForm from '@/components/InputForm'
 import { AppDispatch } from '@/stores'
-import { setConversations } from '@/stores/conversations/conversationsSlice'
-import {
-  setFriends,
-  setReceivedRequests,
-  setSentRequests
-} from '@/stores/friends/friendsSlice'
 import { selectUser, setUser } from '@/stores/user/userSlice'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 import { ErrorMessage, ErrorType } from '@/utils/types'
@@ -76,17 +70,9 @@ function SignIn() {
 
     if (!data?.SignIn) return
 
-    const { conversations, friends, receivedRequests, sentRequests, ...user } =
-      data.SignIn
+    dispatch(setUser(data.SignIn))
 
-    dispatch(setUser(user))
-
-    if (conversations) dispatch(setConversations(conversations))
-    if (friends) dispatch(setFriends(friends))
-    if (receivedRequests) dispatch(setReceivedRequests(receivedRequests))
-    if (sentRequests) dispatch(setSentRequests(sentRequests))
-
-    // socket.connect()
+    socket.connect()
 
     navigate(location.state?.from ?? '/')
   }

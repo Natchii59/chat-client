@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -7,25 +7,38 @@ import { useNavigate } from 'react-router-dom'
 import MessageComponent from './Message'
 import {
   SortDirection,
-  usePaginationMessageQuery
+  usePaginationMessageQuery,
+  useReadMessagesMutation
 } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import {
+  readConversationMessages,
+  selectConversationFirstMessageUnreadId,
   selectConversationId,
   selectConversationMessages,
   selectConversationTotalCount,
   setConversationMessages,
   setConversationTotalCount
 } from '@/stores/conversation/conversationSlice'
+import { setConversationsUnreadMessagesCount } from '@/stores/conversations/conversationsSlice'
+import { selectUser } from '@/stores/user/userSlice'
+import { MessagesListContext } from '@/utils/contexts/MessagesListContext'
 
 function MessagesList() {
   const navigate = useNavigate()
 
+  const { messagesListRef, setMessagesListRef } =
+    useContext(MessagesListContext)
+
   const dispatch = useDispatch<AppDispatch>()
 
+  const currentUser = useSelector(selectUser)
   const conversationId = useSelector(selectConversationId)
   const messages = useSelector(selectConversationMessages)
   const totalCount = useSelector(selectConversationTotalCount)
+  const firstUnreadMessageId = useSelector(
+    selectConversationFirstMessageUnreadId
+  )
 
   const TAKE = 50
   const SKIP = 0
@@ -46,11 +59,12 @@ function MessagesList() {
       }
     },
     skip: !conversationId,
-    fetchPolicy: 'no-cache',
     onError: () => {
       navigate('/', { replace: true })
     }
   })
+
+  const [readMessages] = useReadMessagesMutation()
 
   const loadMore = useCallback(async () => {
     if (totalCount && messages.length >= totalCount) return
@@ -69,21 +83,74 @@ function MessagesList() {
 
     const messagesFetched = [...messages, ...data.PaginationMessage.nodes]
 
-    if (!createdAt) {
+    dispatch(setConversationMessages(messagesFetched))
+
+    if (!createdAt && currentUser) {
       dispatch(setConversationTotalCount(data.PaginationMessage.totalCount))
+      dispatch(
+        readConversationMessages({
+          userId: currentUser.id
+        })
+      )
+    }
+  }, [data])
+
+  useEffect(() => {
+    if (!messagesListRef || !conversationId || !currentUser) return
+
+    const handleScroll = async () => {
+      if (
+        currentUser &&
+        messages[0]?.unreadByIds.includes(currentUser.id) &&
+        messagesListRef.getScrollableTarget()?.scrollTop === 0
+      ) {
+        await readMessages({
+          variables: {
+            conversationId
+          }
+        })
+        dispatch(
+          readConversationMessages({
+            userId: currentUser.id
+          })
+        )
+        dispatch(
+          setConversationsUnreadMessagesCount({
+            userId: currentUser.id,
+            conversationId,
+            unreadMessagesCount: 0
+          })
+        )
+      }
     }
 
-    dispatch(setConversationMessages(messagesFetched))
-  }, [data])
+    if (firstUnreadMessageId)
+      messagesListRef
+        .getScrollableTarget()
+        ?.addEventListener('scroll', handleScroll)
+
+    return () => {
+      messagesListRef
+        .getScrollableTarget()
+        ?.removeEventListener('scroll', handleScroll)
+    }
+  }, [
+    messagesListRef,
+    conversationId,
+    firstUnreadMessageId,
+    currentUser,
+    messages
+  ])
 
   if (loading && !createdAt) return <SkeletonLoader />
 
   return (
     <div
       id='messagesList'
-      className='flex-auto w-full overflow-auto flex flex-col-reverse'
+      className='flex-auto w-full overflow-auto flex flex-col-reverse relative'
     >
       <InfiniteScroll
+        ref={setMessagesListRef}
         dataLength={messages.length}
         hasMore={totalCount !== undefined && totalCount > messages.length}
         loader={<Loading />}

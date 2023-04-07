@@ -2,24 +2,30 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import orderBy from 'lodash/orderBy'
 
 import { RootState } from '../index'
-import { Maybe, Message } from '@/apollo/generated/graphql'
+import { Maybe } from '@/apollo/generated/graphql'
 
 export type ConversationsStore = {
   id: string
   createdAt: Date
-  user: {
+  lastMessageSentAt?: Maybe<Date>
+  creator: {
     id: string
     username: string
     avatar?: Maybe<{
       key: string
       blurhash: string
     }>
+    unreadMessagesCount: number
   }
-  lastMessage?: Maybe<{
+  recipient: {
     id: string
-    content: string
-    createdAt: Date
-  }>
+    username: string
+    avatar?: Maybe<{
+      key: string
+      blurhash: string
+    }>
+    unreadMessagesCount: number
+  }
   isTyping?: boolean
 }
 
@@ -41,31 +47,38 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversations = action.payload
     },
+    setConversationsUnreadMessagesCount: (
+      state,
+      action: PayloadAction<{
+        userId: string
+        conversationId: string
+        unreadMessagesCount: number
+      }>
+    ) => {
+      const conversation = state.conversations.find(
+        conversation => conversation.id === action.payload.conversationId
+      )
+      if (conversation) {
+        const user =
+          conversation.creator.id === action.payload.userId
+            ? conversation.creator
+            : conversation.recipient
+
+        user.unreadMessagesCount = action.payload.unreadMessagesCount
+      }
+    },
     addConversation: (state, action: PayloadAction<ConversationsStore>) => {
       state.conversations = [action.payload, ...state.conversations]
     },
-    addConversationWithSort: (
+    addConversationWithOrderBy: (
       state,
       action: PayloadAction<ConversationsStore>
     ) => {
       state.conversations = orderBy(
         [action.payload, ...state.conversations],
-        conversation => {
-          if (conversation.lastMessage) {
-            return conversation.lastMessage.createdAt
-          }
-
-          return conversation.createdAt
-        },
+        conversation =>
+          conversation.lastMessageSentAt ?? conversation.createdAt,
         'desc'
-      )
-    },
-    removeConversation: (
-      state,
-      action: PayloadAction<ConversationsStore['id']>
-    ) => {
-      state.conversations = state.conversations.filter(
-        conversation => conversation.id !== action.payload
       )
     },
     addTypingConversation: (
@@ -79,6 +92,23 @@ export const conversationsSlice = createSlice({
         conversation.isTyping = true
       }
     },
+    updateConversationToTop: (
+      state,
+      action: PayloadAction<ConversationsStore>
+    ) => {
+      state.conversations = [
+        action.payload,
+        ...state.conversations.filter(conv => conv.id !== action.payload.id)
+      ]
+    },
+    removeConversation: (
+      state,
+      action: PayloadAction<ConversationsStore['id']>
+    ) => {
+      state.conversations = state.conversations.filter(
+        conversation => conversation.id !== action.payload
+      )
+    },
     removeTypingConversation: (
       state,
       action: PayloadAction<ConversationsStore['id']>
@@ -89,70 +119,19 @@ export const conversationsSlice = createSlice({
       if (conversation) {
         conversation.isTyping = false
       }
-    },
-    updateConversationWithNewMessage: (
-      state,
-      action: PayloadAction<Message>
-    ) => {
-      if (action.payload.conversation) {
-        state.conversations = [
-          {
-            ...action.payload.conversation,
-            lastMessage: action.payload
-          },
-          ...state.conversations.filter(
-            conversation =>
-              action.payload.conversation &&
-              conversation.id !== action.payload.conversation.id
-          )
-        ]
-      }
-    },
-    updateConversationWithUpdatedMessage: (
-      state,
-      action: PayloadAction<{
-        conversationId: ConversationsStore['id']
-        message: Message
-      }>
-    ) => {
-      const conversation = state.conversations.find(
-        conversation => conversation.id === action.payload.conversationId
-      )
-
-      if (
-        conversation &&
-        conversation.lastMessage?.id === action.payload.message.id
-      ) {
-        conversation.lastMessage = action.payload.message
-      }
-    },
-    updateConversationWithDeletedMessage: (
-      state,
-      action: PayloadAction<{
-        conversationId: ConversationsStore['id']
-        newLastMessage: ConversationsStore['lastMessage']
-      }>
-    ) => {
-      const conversation = state.conversations.find(
-        conversation => conversation.id === action.payload.conversationId
-      )
-      if (conversation) {
-        conversation.lastMessage = action.payload.newLastMessage
-      }
     }
   }
 })
 
 export const {
   setConversations,
+  setConversationsUnreadMessagesCount,
   addConversation,
-  addConversationWithSort,
-  removeConversation,
+  addConversationWithOrderBy,
   addTypingConversation,
-  removeTypingConversation,
-  updateConversationWithNewMessage,
-  updateConversationWithUpdatedMessage,
-  updateConversationWithDeletedMessage
+  updateConversationToTop,
+  removeConversation,
+  removeTypingConversation
 } = conversationsSlice.actions
 export default conversationsSlice.reducer
 

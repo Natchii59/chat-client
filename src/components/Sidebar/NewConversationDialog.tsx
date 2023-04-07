@@ -10,7 +10,7 @@ import { useCreateConversationMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
 import {
-  addConversationWithSort,
+  addConversationWithOrderBy,
   selectConversations
 } from '@/stores/conversations/conversationsSlice'
 import { selectFriends } from '@/stores/friends/friendsSlice'
@@ -45,7 +45,9 @@ function NewConversationDialog() {
     if (!friendId || loading) return
 
     const findConversation = conversations.find(
-      conversation => conversation.user.id === friendId
+      conversation =>
+        conversation.creator.id === friendId ||
+        conversation.recipient.id === friendId
     )
 
     if (findConversation) {
@@ -76,7 +78,7 @@ function NewConversationDialog() {
     if (created) {
       socket.emit('createConversation', { conversation })
     } else {
-      dispatch(addConversationWithSort(conversation))
+      dispatch(addConversationWithOrderBy(conversation))
     }
     navigate(`/conversation/${conversation.id}`)
     closeModal()

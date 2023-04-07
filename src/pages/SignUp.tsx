@@ -81,7 +81,7 @@ function SignUp() {
 
     dispatch(setUser(data.SignUp))
 
-    // socket.connect()
+    socket.connect()
 
     navigate(location.state?.from ?? '/')
   }

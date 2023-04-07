@@ -6,11 +6,11 @@ import { Maybe } from '@/apollo/generated/graphql'
 export interface UserStore {
   id: string
   username: string
+  createdAt: Date
   avatar?: Maybe<{
     key: string
     blurhash: string
   }>
-  createdAt: Date
 }
 
 export interface UserState {

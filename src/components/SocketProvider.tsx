@@ -1,13 +1,14 @@
-import { PropsWithChildren, useContext, useEffect, useState } from 'react'
+import { PropsWithChildren, useContext, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { Message } from '@/apollo/generated/graphql'
+import { Message, useReadMessagesMutation } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import {
   MessageConversationStore,
   addConversationMessage,
   removeConversationMessage,
   selectConversationId,
+  setConversationFirstMessageUnreadId,
   setConversationIsTyping,
   updateConversationMessage
 } from '@/stores/conversation/conversationSlice'
@@ -16,9 +17,7 @@ import {
   addConversation,
   addTypingConversation,
   removeTypingConversation,
-  updateConversationWithDeletedMessage,
-  updateConversationWithNewMessage,
-  updateConversationWithUpdatedMessage
+  updateConversationToTop
 } from '@/stores/conversations/conversationsSlice'
 import {
   UserFriendsStore,
@@ -27,40 +26,84 @@ import {
   addReceivedRequest,
   addSentRequest,
   removeFriend,
+  removeFriendOnline,
   removeReceivedRequest,
   removeSentRequest,
-  selectFriends,
   selectReceivedRequests,
   selectSentRequests,
   setFriendsStatus
 } from '@/stores/friends/friendsSlice'
+import { selectUser } from '@/stores/user/userSlice'
+import { MessagesListContext } from '@/utils/contexts/MessagesListContext'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 
 function SocketProvider({ children }: PropsWithChildren) {
   const { socket } = useContext(SocketContext)
+  const { messagesListRef } = useContext(MessagesListContext)
 
   const dispatch = useDispatch<AppDispatch>()
 
+  const currentUser = useSelector(selectUser)
   const currentConversationId = useSelector(selectConversationId)
   const receivedRequests = useSelector(selectReceivedRequests)
   const sentRequests = useSelector(selectSentRequests)
-  const friends = useSelector(selectFriends)
 
-  const [intervalFriendsStatus, setIntervalFriendsStatus] =
-    useState<NodeJS.Timeout>()
+  const [readMessages] = useReadMessagesMutation()
 
   useEffect(() => {
-    socket.on(
-      'onMessageCreated',
-      ({ message }: { message: MessageConversationStore }) => {
-        dispatch(addConversationMessage(message))
+    socket.on('onMessageCreated', async ({ message }: { message: Message }) => {
+      dispatch(addConversationMessage(message))
+
+      if (currentConversationId && messagesListRef) {
+        if (
+          message.user.id !== currentUser?.id &&
+          messagesListRef.getScrollableTarget()?.scrollTop === 0
+        ) {
+          await readMessages({
+            variables: {
+              conversationId: currentConversationId
+            }
+          })
+          dispatch(setConversationFirstMessageUnreadId(undefined))
+        } else if (currentUser) {
+          const currentUserConversation =
+            message.conversation.creator.id === currentUser.id
+              ? message.conversation.creator
+              : message.conversation.recipient
+
+          dispatch(
+            setConversationFirstMessageUnreadId(
+              currentUserConversation.firstUnreadMessageId
+            )
+          )
+        }
       }
-    )
+    })
 
     socket.on(
       'onMessageCreatedSidebar',
       ({ message }: { message: Message }) => {
-        dispatch(updateConversationWithNewMessage(message))
+        if (
+          message.conversation.id === currentConversationId &&
+          currentUser &&
+          messagesListRef &&
+          messagesListRef.getScrollableTarget()?.scrollTop === 0
+        ) {
+          const currentUserConversation =
+            message.conversation.creator.id === currentUser.id
+              ? 'creator'
+              : 'recipient'
+
+          dispatch(
+            updateConversationToTop({
+              ...message.conversation,
+              [currentUserConversation]: {
+                ...message.conversation[currentUserConversation],
+                unreadMessagesCount: 0
+              }
+            })
+          )
+        } else dispatch(updateConversationToTop(message.conversation))
       }
     )
 
@@ -71,45 +114,9 @@ function SocketProvider({ children }: PropsWithChildren) {
       }
     )
 
-    socket.on(
-      'onMessageUpdatedSidebar',
-      ({
-        conversationId,
-        message
-      }: {
-        conversationId: string
-        message: Message
-      }) => {
-        dispatch(
-          updateConversationWithUpdatedMessage({
-            conversationId,
-            message
-          })
-        )
-      }
-    )
-
     socket.on('onMessageDeleted', ({ messageId }: { messageId: string }) => {
       dispatch(removeConversationMessage(messageId))
     })
-
-    socket.on(
-      'onMessageDeletedSidebar',
-      ({
-        conversationId,
-        newLastMessage
-      }: {
-        conversationId: string
-        newLastMessage: Message
-      }) => {
-        dispatch(
-          updateConversationWithDeletedMessage({
-            conversationId,
-            newLastMessage
-          })
-        )
-      }
-    )
 
     socket.on('onTypingStart', () => {
       dispatch(setConversationIsTyping(true))
@@ -127,7 +134,6 @@ function SocketProvider({ children }: PropsWithChildren) {
       'onTypingStartConversation',
       ({ conversationId }: { conversationId: string }) => {
         if (conversationId === currentConversationId) return
-        console.log('onTypingStartConversation')
         dispatch(addTypingConversation(conversationId))
       }
     )
@@ -136,7 +142,6 @@ function SocketProvider({ children }: PropsWithChildren) {
       'onTypingStopConversation',
       ({ conversationId }: { conversationId: string }) => {
         if (conversationId === currentConversationId) return
-        console.log('onTypingStopConversation')
         dispatch(removeTypingConversation(conversationId))
       }
     )
@@ -199,6 +204,13 @@ function SocketProvider({ children }: PropsWithChildren) {
       dispatch(addFriendOnline(userId))
     })
 
+    socket.on(
+      'onFriendsStatusDisconnected',
+      ({ userId }: { userId: string }) => {
+        dispatch(removeFriendOnline(userId))
+      }
+    )
+
     return () => {
       socket.off('onMessageCreated')
       socket.off('onMessageCreatedSidebar')
@@ -220,25 +232,17 @@ function SocketProvider({ children }: PropsWithChildren) {
       socket.off('onConversationCreated')
       socket.off('onFriendsStatus')
       socket.off('onFriendsStatusConnected')
+      socket.off('onFriendsStatusDisconnected')
     }
-  }, [socket, dispatch, currentConversationId, receivedRequests, sentRequests])
-
-  useEffect(() => {
-    clearInterval(intervalFriendsStatus)
-    if (!friends.length) return
-
-    const interval = setInterval(() => {
-      socket.emit('getFriendsStatus', {
-        userIds: friends.map(friend => friend.id)
-      })
-    }, 10000)
-
-    setIntervalFriendsStatus(interval)
-
-    return () => {
-      clearInterval(intervalFriendsStatus)
-    }
-  }, [friends])
+  }, [
+    socket,
+    dispatch,
+    currentUser,
+    currentConversationId,
+    receivedRequests,
+    sentRequests,
+    messagesListRef
+  ])
 
   return <>{children}</>
 }

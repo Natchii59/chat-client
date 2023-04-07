@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { useProfileQuery } from '@/apollo/generated/graphql'
+import { useAuthenticatedUserQuery } from '@/apollo/generated/graphql'
 import { AppDispatch } from '@/stores'
 import { setConversations } from '@/stores/conversations/conversationsSlice'
 import {
@@ -23,9 +23,8 @@ function RequireAuth() {
 
   const routesWithoutAuth = ['/sign-in', '/sign-up']
 
-  const { loading } = useProfileQuery({
+  const { loading } = useAuthenticatedUserQuery({
     skip: routesWithoutAuth.includes(location.pathname),
-    fetchPolicy: 'no-cache',
     onError() {
       socket.disconnect()
 
@@ -35,31 +34,30 @@ function RequireAuth() {
       })
     },
     onCompleted(data) {
-      const {
-        conversations,
-        friends,
-        receivedRequests,
-        sentRequests,
-        ...user
-      } = data.Profile
+      dispatch(setUser(data.Profile))
 
-      dispatch(setUser(user))
+      dispatch(setConversations(data.UserConversations))
+      dispatch(setFriends(data.UserFriends))
+      dispatch(setReceivedRequests(data.UserReceivedRequestsFriends))
+      dispatch(setSentRequests(data.UserSentRequestsFriends))
 
-      if (conversations) dispatch(setConversations(conversations))
-      if (friends) dispatch(setFriends(friends))
-      if (receivedRequests) dispatch(setReceivedRequests(receivedRequests))
-      if (sentRequests) dispatch(setSentRequests(sentRequests))
+      const connectedSocket = socket.connect()
 
-      socket.connect()
+      connectedSocket.on('connect', async () => {
+        if (data.UserFriends.length) {
+          let res = false
 
-      if (friends?.length) {
-        socket.emit('getFriendsStatus', {
-          userIds: friends.map(friend => friend.id)
-        })
-        socket.emit('onConnected', {
-          userIds: friends.map(friend => friend.id)
-        })
-      }
+          while (!res) {
+            res = await connectedSocket.emitWithAck('getFriendsStatus', {
+              userIds: data.UserFriends.map(friend => friend.id)
+            })
+
+            res = await connectedSocket.emitWithAck('onConnected', {
+              userIds: data.UserFriends.map(friend => friend.id)
+            })
+          }
+        }
+      })
     }
   })
 

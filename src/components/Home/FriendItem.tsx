@@ -14,7 +14,7 @@ import {
 import { AppDispatch } from '@/stores'
 import { initInformationDialogError } from '@/stores/app/appSlice'
 import {
-  addConversationWithSort,
+  addConversationWithOrderBy,
   selectConversations
 } from '@/stores/conversations/conversationsSlice'
 import { UserFriendsStore } from '@/stores/friends/friendsSlice'
@@ -59,7 +59,9 @@ function FriendItem({ friend }: FriendItemProps) {
     if (loadingCreateConversation) return
 
     const findConversation = conversations.find(
-      conversation => conversation.user.id === friend.id
+      conversation =>
+        conversation.creator.id === friend.id ||
+        conversation.recipient.id === friend.id
     )
     if (findConversation) {
       navigate(`/conversation/${findConversation.id}`)
@@ -88,7 +90,7 @@ function FriendItem({ friend }: FriendItemProps) {
     if (created) {
       socket.emit('createConversation', { conversation })
     } else {
-      dispatch(addConversationWithSort(conversation))
+      dispatch(addConversationWithOrderBy(conversation))
     }
     navigate(`/conversation/${conversation.id}`)
   }
@@ -121,10 +123,10 @@ function FriendItem({ friend }: FriendItemProps) {
       <div
         role='button'
         onClick={() => onClickFriendHandle(friend)}
-        className='py-2 px-4 flex items-center justify-between rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 active:ring-2 active:ring-offset-0 active:ring-zinc-300 dark:active:ring-zinc-600'
+        className='py-2 px-4 flex items-center justify-between rounded-xl bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 active:ring-2 active:ring-offset-0 active:ring-zinc-300 dark:active:ring-zinc-600'
       >
-        <div className='flex items-center gap-2'>
-          <div className='relative'>
+        <div className='flex items-center gap-2 bg-inherit'>
+          <div className='relative bg-inherit'>
             {friend.avatar ? (
               <>
                 <ImageOptimized
@@ -145,6 +147,12 @@ function FriendItem({ friend }: FriendItemProps) {
             {loadingCreateConversation ? (
               <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20'>
                 <FaSpinner className='w-5 h-5 animate-spin' />
+              </div>
+            ) : null}
+
+            {friend.online ? (
+              <div className='w-4 h-4 rounded-full p-0.5 bg-inherit absolute right-0 bottom-0 z-20 flex items-center justify-center'>
+                <div className='bg-green-500 w-full h-full rounded-full' />
               </div>
             ) : null}
           </div>

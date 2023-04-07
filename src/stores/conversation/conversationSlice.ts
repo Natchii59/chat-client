@@ -10,6 +10,8 @@ interface UserConversationStore {
     key: string
     blurhash: string
   }>
+  firstUnreadMessageId?: Maybe<string>
+  unreadMessagesCount: number
 }
 
 export interface MessageConversationStore {
@@ -17,7 +19,15 @@ export interface MessageConversationStore {
   content: string
   createdAt: Date
   isModified: boolean
-  user: UserConversationStore
+  unreadByIds: string[]
+  user: {
+    id: string
+    username: string
+    avatar?: Maybe<{
+      key: string
+      blurhash: string
+    }>
+  }
 }
 
 export interface ConversationState {
@@ -27,6 +37,8 @@ export interface ConversationState {
   totalCount?: number
   isTyping: boolean
   editMessageId?: string
+  firstMessageUnreadId?: Maybe<string>
+  unreadMessagesCount?: number
 }
 
 const initialState: ConversationState = {
@@ -35,7 +47,9 @@ const initialState: ConversationState = {
   messages: [],
   totalCount: undefined,
   isTyping: false,
-  editMessageId: undefined
+  editMessageId: undefined,
+  firstMessageUnreadId: undefined,
+  unreadMessagesCount: undefined
 }
 
 export const conversationSlice = createSlice({
@@ -78,6 +92,27 @@ export const conversationSlice = createSlice({
     ) => {
       state.editMessageId = action.payload
     },
+    setConversationFirstMessageUnreadId: (
+      state,
+      action: PayloadAction<ConversationState['firstMessageUnreadId']>
+    ) => {
+      state.firstMessageUnreadId = action.payload
+    },
+    readConversationMessages: (
+      state,
+      action: PayloadAction<{
+        userId: string
+      }>
+    ) => {
+      state.messages = state.messages.map(message => {
+        if (message.unreadByIds.some(id => id === action.payload.userId))
+          message.unreadByIds = message.unreadByIds.filter(
+            id => id !== action.payload.userId
+          )
+        return message
+      })
+      state.unreadMessagesCount = 0
+    },
     addConversationMessage: (
       state,
       action: PayloadAction<MessageConversationStore>
@@ -118,6 +153,8 @@ export const {
   setConversationTotalCount,
   setConversationIsTyping,
   setConversationEditMessageId,
+  setConversationFirstMessageUnreadId,
+  readConversationMessages,
   addConversationMessage,
   updateConversationMessage,
   removeConversationMessage
@@ -135,3 +172,5 @@ export const selectConversationIsTyping = (state: RootState) =>
   state.conversation.isTyping
 export const selectConversationEditMessageId = (state: RootState) =>
   state.conversation.editMessageId
+export const selectConversationFirstMessageUnreadId = (state: RootState) =>
+  state.conversation.firstMessageUnreadId

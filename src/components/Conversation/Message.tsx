@@ -10,6 +10,7 @@ import { initInformationDialogError } from '@/stores/app/appSlice'
 import {
   MessageConversationStore,
   selectConversationEditMessageId,
+  selectConversationFirstMessageUnreadId,
   selectConversationId,
   selectConversationUser,
   setConversationEditMessageId
@@ -34,6 +35,9 @@ function MessageComponent({ message, showUser }: MessageProps) {
   const currentUser = useSelector(selectUser)
   const userConversation = useSelector(selectConversationUser)
   const editMessageId = useSelector(selectConversationEditMessageId)
+  const firstMessageUnreadId = useSelector(
+    selectConversationFirstMessageUnreadId
+  )
 
   const [showContextMenu, setShowContextMenu] = useState<boolean>(false)
   const [targetContextMenu, setTargetContextMenu] = useState<any | null>(null)
@@ -43,6 +47,9 @@ function MessageComponent({ message, showUser }: MessageProps) {
 
   const date = moment(message.createdAt).calendar()
   const hours = moment(message.createdAt).format('HH:mm')
+
+  const firstUnread =
+    firstMessageUnreadId === message.id && message.user.id !== currentUser?.id
 
   const [updateMessage, { loading: loadingUpdateMessage }] =
     useUpdateMessageMutation()
@@ -111,10 +118,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
     if (!data?.UpdateMessage) return
 
     socket.emit('updateMessage', {
-      message: data.UpdateMessage,
-      conversationId,
-      user1Id: currentUser.id,
-      user2Id: userConversation.id
+      message: data.UpdateMessage
     })
 
     dispatch(setConversationEditMessageId(undefined))
@@ -158,10 +162,20 @@ function MessageComponent({ message, showUser }: MessageProps) {
   return (
     <>
       <div className='relative w-full'>
+        {firstUnread ? (
+          <div className='w-full py-3 relative'>
+            <hr className='h-px bg-blue-500 border-none' />
+
+            <span className='absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 text-blue-500 bg-zinc-50 dark:bg-zinc-900 px-2 text-sm'>
+              New messages
+            </span>
+          </div>
+        ) : null}
+
         <div
           onContextMenu={handleContextMenu}
           className={`w-full pl-18 pr-12 hover:bg-zinc-100 hover:dark:bg-zinc-800/30 rounded-xl group ${
-            showUser && 'mt-4'
+            showUser && !firstUnread ? 'mt-4' : null
           } ${
             showContextMenu || editMessageId === message.id
               ? 'bg-zinc-100 dark:bg-zinc-800/30'
@@ -202,7 +216,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
                 autoFocus
                 className='block p-2 bg-zinc-50 dark:bg-zinc-900 border-none outline-none text-base resize-none max-h-40 w-full rounded-lg'
                 value={editContent}
-                // disabled={isLoadingUpdateMessage}
+                disabled={loadingUpdateMessage}
                 onChange={e => {
                   setEditContent(e.target.value)
                 }}

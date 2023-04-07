@@ -1,8 +1,34 @@
+fragment Conversation on Conversation {
+  id
+  createdAt
+  creator {
+    id
+    username
+    avatar {
+      key
+      blurhash
+    }
+    firstUnreadMessageId
+    unreadMessagesCount
+  }
+  recipient {
+    id
+    username
+    avatar {
+      key
+      blurhash
+    }
+    firstUnreadMessageId
+    unreadMessagesCount
+  }
+}
+
 fragment MessageConversation on Message {
   id
   content
   createdAt
   isModified
+  unreadByIds
   user {
     id
     username
@@ -15,15 +41,7 @@ fragment MessageConversation on Message {
 
 query FindOneConversation($id: ID!) {
   FindOneConversation(id: $id) {
-    id
-    user {
-      id
-      username
-      avatar {
-        key
-        blurhash
-      }
-    }
+    ...Conversation
   }
 }
 
@@ -45,16 +63,7 @@ mutation CreateMessage($input: CreateMessageInput!) {
   CreateMessage(input: $input) {
     ...MessageConversation
     conversation {
-      id
-      createdAt
-      user {
-        id
-        username
-        avatar {
-          key
-          blurhash
-        }
-      }
+      ...Conversation
     }
   }
 }
@@ -62,9 +71,16 @@ mutation CreateMessage($input: CreateMessageInput!) {
 mutation UpdateMessage($input: UpdateMessageInput!) {
   UpdateMessage(input: $input) {
     ...MessageConversation
+    conversation {
+      id
+    }
   }
 }
 
 mutation DeleteMessage($id: ID!) {
   DeleteMessage(id: $id)
+}
+
+mutation ReadMessages($conversationId: ID!) {
+  ReadMessages(conversationId: $conversationId)
 }

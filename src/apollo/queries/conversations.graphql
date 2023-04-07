@@ -4,18 +4,24 @@ mutation CreateConversation($input: CreateConversationInput!) {
     conversation {
       id
       createdAt
-      user {
+      lastMessageSentAt
+      creator {
         id
         username
         avatar {
           key
           blurhash
         }
+        unreadMessagesCount
       }
-      lastMessage {
+      recipient {
         id
-        content
-        createdAt
+        username
+        avatar {
+          key
+          blurhash
+        }
+        unreadMessagesCount
       }
     }
   }

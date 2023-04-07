@@ -44,6 +44,12 @@ export const friendsSlice = createSlice({
     ) => {
       state.sentRequests = action.payload
     },
+    setFriendsStatus: (state, action: PayloadAction<string[]>) => {
+      state.friends.forEach(friend => {
+        const isOnline = action.payload.some(id => id === friend.id)
+        friend.online = isOnline
+      })
+    },
     addFriend: (state, action: PayloadAction<UserFriendsStore>) => {
       state.friends.push(action.payload)
       state.friends = state.friends.sort((a, b) =>
@@ -61,6 +67,10 @@ export const friendsSlice = createSlice({
       state.sentRequests = state.sentRequests.sort((a, b) =>
         a.username.localeCompare(b.username)
       )
+    },
+    addFriendOnline: (state, action: PayloadAction<string>) => {
+      const friend = state.friends.find(friend => friend.id === action.payload)
+      if (friend) friend.online = true
     },
     removeFriend: (state, action: PayloadAction<UserFriendsStore['id']>) => {
       state.friends = state.friends.filter(
@@ -83,15 +93,9 @@ export const friendsSlice = createSlice({
         request => request.id !== action.payload
       )
     },
-    setFriendsStatus: (state, action: PayloadAction<string[]>) => {
-      state.friends.forEach(friend => {
-        const isOnline = action.payload.some(id => id === friend.id)
-        friend.online = isOnline
-      })
-    },
-    addFriendOnline: (state, action: PayloadAction<string>) => {
+    removeFriendOnline: (state, action: PayloadAction<string>) => {
       const friend = state.friends.find(friend => friend.id === action.payload)
-      if (friend) friend.online = true
+      if (friend) friend.online = false
     }
   }
 })
@@ -100,14 +104,15 @@ export const {
   setFriends,
   setReceivedRequests,
   setSentRequests,
+  setFriendsStatus,
   addFriend,
   addReceivedRequest,
   addSentRequest,
+  addFriendOnline,
   removeFriend,
   removeReceivedRequest,
   removeSentRequest,
-  setFriendsStatus,
-  addFriendOnline
+  removeFriendOnline
 } = friendsSlice.actions
 export default friendsSlice.reducer
 

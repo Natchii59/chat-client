@@ -6,51 +6,44 @@ fragment UserFragment on User {
     key
     blurhash
   }
-  conversations {
-    id
-    createdAt
-    user {
-      id
-      username
-      avatar {
-        key
-        blurhash
-      }
-    }
-    lastMessage {
-      id
-      content
-      createdAt
-    }
-  }
-  friends {
-    id
-    username
-    avatar {
-      key
-      blurhash
-    }
-  }
-  receivedRequests {
-    id
-    username
-    avatar {
-      key
-      blurhash
-    }
-  }
-  sentRequests {
-    id
-    username
-    avatar {
-      key
-      blurhash
-    }
-  }
 }
 
-query Profile {
+fragment UserConversationFragment on UserConversation {
+  id
+  username
+  createdAt
+  avatar {
+    key
+    blurhash
+  }
+  unreadMessagesCount
+}
+
+query AuthenticatedUser {
   Profile {
+    ...UserFragment
+  }
+
+  UserConversations {
+    id
+    createdAt
+    creator {
+      ...UserConversationFragment
+    }
+    recipient {
+      ...UserConversationFragment
+    }
+  }
+
+  UserFriends {
+    ...UserFragment
+  }
+
+  UserReceivedRequestsFriends {
+    ...UserFragment
+  }
+
+  UserSentRequestsFriends {
     ...UserFragment
   }
 }

@@ -13,6 +13,7 @@ import {
   setConversationEditMessageId
 } from '@/stores/conversation/conversationSlice'
 import { selectUser } from '@/stores/user/userSlice'
+import { MessagesListContext } from '@/utils/contexts/MessagesListContext'
 import { SocketContext } from '@/utils/contexts/SocketContext'
 import { ErrorType } from '@/utils/types'
 
@@ -22,6 +23,7 @@ interface MessageInputProps {
 
 function MessageInput({ messageInputRef }: MessageInputProps) {
   const { socket } = useContext(SocketContext)
+  const { messagesListRef } = useContext(MessagesListContext)
 
   const dispatch = useDispatch<AppDispatch>()
 
@@ -73,13 +75,15 @@ function MessageInput({ messageInputRef }: MessageInputProps) {
     if (!data?.CreateMessage) return
 
     socket.emit('createMessage', {
-      message: data.CreateMessage,
-      conversationId,
-      user1Id: currentUser.id,
-      user2Id: conversationUser.id
+      message: data.CreateMessage
     })
 
     setMessage('')
+    if (messagesListRef?.getScrollableTarget()?.scrollTop !== 0) {
+      messagesListRef?.getScrollableTarget()?.scrollTo({
+        top: 0
+      })
+    }
   }
 
   const sendTypingStatus = () => {
@@ -117,17 +121,22 @@ function MessageInput({ messageInputRef }: MessageInputProps) {
         e.key === 'ArrowUp'
       ) {
         e.preventDefault()
-        dispatch(setConversationEditMessageId(messages[0].id))
+        for (const msg of messages) {
+          if (msg.user.id === currentUser?.id) {
+            dispatch(setConversationEditMessageId(msg.id))
+            break
+          }
+        }
       }
     }
 
-    if (message.length === 0 && messages[0])
+    if (message.length === 0 && messages.length > 0 && currentUser)
       window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [messageInputRef, message, messages])
+  }, [messageInputRef, message, messages, currentUser])
 
   useEffect(() => {
     if (data?.CreateMessage && messageInputRef?.current) {
