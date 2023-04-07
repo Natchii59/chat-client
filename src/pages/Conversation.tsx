@@ -173,8 +173,6 @@ function Conversation() {
       }
     }
 
-    console.log('firstUnreadMessageId', firstUnreadMessageId)
-
     if (firstUnreadMessageId) window.addEventListener('keydown', handleKeyDown)
 
     return () => {

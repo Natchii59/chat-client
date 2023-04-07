@@ -37,6 +37,18 @@ fragment MessageConversation on Message {
       blurhash
     }
   }
+  replyTo {
+    id
+    content
+    user {
+      id
+      username
+      avatar {
+        key
+        blurhash
+      }
+    }
+  }
 }
 
 query FindOneConversation($id: ID!) {

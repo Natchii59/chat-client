@@ -48,6 +48,8 @@ export type CreateMessageInput = {
   content: Scalars['String'];
   /** ID of the conversation */
   conversationId: Scalars['ID'];
+  /** ID of the message to reply to */
+  replyToId?: InputMaybe<Scalars['ID']>;
 };
 
 export type CreateUserInput = {
@@ -88,6 +90,8 @@ export type Message = {
   id: Scalars['ID'];
   /** Whether the message is modified */
   isModified: Scalars['Boolean'];
+  /** The message this message is a reply to. */
+  replyTo?: Maybe<Message>;
   /** Ids of users who have not read the message */
   unreadByIds: Array<Scalars['ID']>;
   /** Date and time when the resource was last updated. */
@@ -361,7 +365,7 @@ export type SignUpMutation = { SignUp: { id: string, username: string, createdAt
 
 export type ConversationFragment = { id: string, createdAt: any, creator: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null }, recipient: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null } };
 
-export type MessageConversationFragment = { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } };
+export type MessageConversationFragment = { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null }, replyTo?: { id: string, content: string, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } | null };
 
 export type FindOneConversationQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -378,21 +382,21 @@ export type PaginationMessageQueryVariables = Exact<{
 }>;
 
 
-export type PaginationMessageQuery = { PaginationMessage: { totalCount: number, nodes: Array<{ id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } }> } };
+export type PaginationMessageQuery = { PaginationMessage: { totalCount: number, nodes: Array<{ id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null }, replyTo?: { id: string, content: string, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } | null }> } };
 
 export type CreateMessageMutationVariables = Exact<{
   input: CreateMessageInput;
 }>;
 
 
-export type CreateMessageMutation = { CreateMessage: { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, conversation: { id: string, createdAt: any, creator: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null }, recipient: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null } }, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } };
+export type CreateMessageMutation = { CreateMessage: { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, conversation: { id: string, createdAt: any, creator: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null }, recipient: { id: string, username: string, firstUnreadMessageId?: string | null, unreadMessagesCount: number, avatar?: { key: string, blurhash: string } | null } }, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null }, replyTo?: { id: string, content: string, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } | null } };
 
 export type UpdateMessageMutationVariables = Exact<{
   input: UpdateMessageInput;
 }>;
 
 
-export type UpdateMessageMutation = { UpdateMessage: { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, conversation: { id: string }, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } };
+export type UpdateMessageMutation = { UpdateMessage: { id: string, content: string, createdAt: any, isModified: boolean, unreadByIds: Array<string>, conversation: { id: string }, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null }, replyTo?: { id: string, content: string, user: { id: string, username: string, avatar?: { key: string, blurhash: string } | null } } | null } };
 
 export type DeleteMessageMutationVariables = Exact<{
   id: Scalars['ID'];
@@ -526,6 +530,18 @@ export const MessageConversationFragmentDoc = gql`
     avatar {
       key
       blurhash
+    }
+  }
+  replyTo {
+    id
+    content
+    user {
+      id
+      username
+      avatar {
+        key
+        blurhash
+      }
     }
   }
 }

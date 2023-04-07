@@ -1,5 +1,6 @@
 import moment from 'moment'
 import { useContext, useEffect, useRef, useState } from 'react'
+import { FaReply } from 'react-icons/fa'
 import { useDispatch, useSelector } from 'react-redux'
 
 import MessageContextMenu from './MessageContextMenu'
@@ -12,8 +13,10 @@ import {
   selectConversationEditMessageId,
   selectConversationFirstMessageUnreadId,
   selectConversationId,
+  selectConversationReplyToMessage,
   selectConversationUser,
-  setConversationEditMessageId
+  setConversationEditMessageId,
+  setConversationReplyToMessage
 } from '@/stores/conversation/conversationSlice'
 import { selectUser } from '@/stores/user/userSlice'
 import { MessageInputContext } from '@/utils/contexts/MessageInputContext'
@@ -35,6 +38,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
   const currentUser = useSelector(selectUser)
   const userConversation = useSelector(selectConversationUser)
   const editMessageId = useSelector(selectConversationEditMessageId)
+  const messageReplyTo = useSelector(selectConversationReplyToMessage)
   const firstMessageUnreadId = useSelector(
     selectConversationFirstMessageUnreadId
   )
@@ -159,6 +163,24 @@ function MessageComponent({ message, showUser }: MessageProps) {
     }
   }, [editMessageId])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        dispatch(setConversationReplyToMessage(undefined))
+        messageInputRef?.current?.focus()
+      }
+    }
+
+    if (messageReplyTo?.id === message.id) {
+      messageInputRef?.current?.focus()
+      window.addEventListener('keydown', handleKeyDown)
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [messageReplyTo])
+
   return (
     <>
       <div className='relative w-full'>
@@ -175,14 +197,24 @@ function MessageComponent({ message, showUser }: MessageProps) {
         <div
           onContextMenu={handleContextMenu}
           className={`w-full pl-18 pr-12 hover:bg-zinc-100 hover:dark:bg-zinc-800/30 rounded-xl group ${
-            showUser && !firstUnread ? 'mt-4' : null
+            (showUser || message.replyTo) && !firstUnread ? 'mt-4' : null
           } ${
-            showContextMenu || editMessageId === message.id
+            showContextMenu ||
+            editMessageId === message.id ||
+            messageReplyTo?.id === message.id
               ? 'bg-zinc-100 dark:bg-zinc-800/30'
               : null
           } ${editMessageId === message.id ? 'py-1' : 'py-0.5'}`}
         >
-          {showUser ? (
+          {message.replyTo ? (
+            <div className='flex items-center gap-1.5 text-zinc-500 text-sm text-ellipsis overflow-hidden whitespace-nowrap select-none'>
+              <FaReply />
+              <span className='font-bold'>{message.replyTo.user.username}</span>
+              {message.replyTo.content}
+            </div>
+          ) : null}
+
+          {showUser || message.replyTo ? (
             <>
               {message.user?.avatar ? (
                 <ImageOptimized
@@ -266,7 +298,7 @@ function MessageComponent({ message, showUser }: MessageProps) {
         target={targetContextMenu}
         show={showContextMenu}
         onHide={handleHideContextMenu}
-        messageId={message.id}
+        message={message}
         ownMessage={message.user?.id === currentUser?.id}
       />
     </>

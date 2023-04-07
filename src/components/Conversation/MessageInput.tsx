@@ -9,8 +9,10 @@ import {
   selectConversationId,
   selectConversationIsTyping,
   selectConversationMessages,
+  selectConversationReplyToMessage,
   selectConversationUser,
-  setConversationEditMessageId
+  setConversationEditMessageId,
+  setConversationReplyToMessage
 } from '@/stores/conversation/conversationSlice'
 import { selectUser } from '@/stores/user/userSlice'
 import { MessagesListContext } from '@/utils/contexts/MessagesListContext'
@@ -32,6 +34,7 @@ function MessageInput({ messageInputRef }: MessageInputProps) {
   const conversationUser = useSelector(selectConversationUser)
   const isTyping = useSelector(selectConversationIsTyping)
   const messages = useSelector(selectConversationMessages)
+  const messageReplyTo = useSelector(selectConversationReplyToMessage)
 
   const [message, setMessage] = useState('')
 
@@ -60,7 +63,8 @@ function MessageInput({ messageInputRef }: MessageInputProps) {
       variables: {
         input: {
           content: message.trim(),
-          conversationId
+          conversationId,
+          replyToId: messageReplyTo?.id
         }
       }
     })
@@ -79,6 +83,7 @@ function MessageInput({ messageInputRef }: MessageInputProps) {
     })
 
     setMessage('')
+    if (messageReplyTo) dispatch(setConversationReplyToMessage(undefined))
     if (messagesListRef?.getScrollableTarget()?.scrollTop !== 0) {
       messagesListRef?.getScrollableTarget()?.scrollTo({
         top: 0
@@ -146,15 +151,21 @@ function MessageInput({ messageInputRef }: MessageInputProps) {
 
   return (
     <form onSubmit={handleSendMessage} className='relative w-full'>
-      {isTyping && (
+      {isTyping ? (
         <div className='px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-sm rounded-t-xl border-2 border-b-0 border-zinc-300 dark:border-zinc-600'>
           {`${conversationUser?.username} is typing...`}
         </div>
-      )}
+      ) : null}
+
+      {messageReplyTo ? (
+        <div className='px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-sm rounded-t-xl border-2 border-b-0 border-zinc-300 dark:border-zinc-600'>
+          Replying to {messageReplyTo.user.username}
+        </div>
+      ) : null}
 
       <div
         className={`flex items-start bg-zinc-100 dark:bg-zinc-800 rounded-xl border-2 border-zinc-300 dark:border-zinc-600 text-base ${
-          isTyping && 'rounded-t-none border-t-0'
+          isTyping || messageReplyTo ? 'rounded-t-none border-t-0' : null
         }`}
       >
         <textarea

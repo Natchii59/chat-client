@@ -74,6 +74,46 @@ function MessagesList() {
     setCreatedAt(createdAt)
   }, [messages, totalCount])
 
+  const handleScroll = useCallback(
+    async (e: MouseEvent) => {
+      const scrollTop = (e.target as any).scrollTop
+
+      if (
+        messagesListRef &&
+        currentUser &&
+        conversationId &&
+        firstUnreadMessageId &&
+        messages[0]?.unreadByIds.includes(currentUser.id) &&
+        scrollTop === 0
+      ) {
+        await readMessages({
+          variables: {
+            conversationId
+          }
+        })
+        dispatch(
+          readConversationMessages({
+            userId: currentUser.id
+          })
+        )
+        dispatch(
+          setConversationsUnreadMessagesCount({
+            userId: currentUser.id,
+            conversationId,
+            unreadMessagesCount: 0
+          })
+        )
+      }
+    },
+    [
+      messagesListRef,
+      currentUser,
+      conversationId,
+      firstUnreadMessageId,
+      messages
+    ]
+  )
+
   useEffect(() => {
     setCreatedAt(undefined)
   }, [conversationId])
@@ -95,53 +135,6 @@ function MessagesList() {
     }
   }, [data])
 
-  useEffect(() => {
-    if (!messagesListRef || !conversationId || !currentUser) return
-
-    const handleScroll = async () => {
-      if (
-        currentUser &&
-        messages[0]?.unreadByIds.includes(currentUser.id) &&
-        messagesListRef.getScrollableTarget()?.scrollTop === 0
-      ) {
-        await readMessages({
-          variables: {
-            conversationId
-          }
-        })
-        dispatch(
-          readConversationMessages({
-            userId: currentUser.id
-          })
-        )
-        dispatch(
-          setConversationsUnreadMessagesCount({
-            userId: currentUser.id,
-            conversationId,
-            unreadMessagesCount: 0
-          })
-        )
-      }
-    }
-
-    if (firstUnreadMessageId)
-      messagesListRef
-        .getScrollableTarget()
-        ?.addEventListener('scroll', handleScroll)
-
-    return () => {
-      messagesListRef
-        .getScrollableTarget()
-        ?.removeEventListener('scroll', handleScroll)
-    }
-  }, [
-    messagesListRef,
-    conversationId,
-    firstUnreadMessageId,
-    currentUser,
-    messages
-  ])
-
   if (loading && !createdAt) return <SkeletonLoader />
 
   return (
@@ -156,6 +149,7 @@ function MessagesList() {
         loader={<Loading />}
         inverse={true}
         next={loadMore}
+        onScroll={handleScroll}
         scrollableTarget='messagesList'
         className='flex flex-col-reverse first:mb-4'
       >

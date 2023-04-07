@@ -28,6 +28,18 @@ export interface MessageConversationStore {
       blurhash: string
     }>
   }
+  replyTo?: Maybe<{
+    id: string
+    content: string
+    user: {
+      id: string
+      username: string
+      avatar?: Maybe<{
+        key: string
+        blurhash: string
+      }>
+    }
+  }>
 }
 
 export interface ConversationState {
@@ -37,6 +49,7 @@ export interface ConversationState {
   totalCount?: number
   isTyping: boolean
   editMessageId?: string
+  replyToMessage?: MessageConversationStore
   firstMessageUnreadId?: Maybe<string>
   unreadMessagesCount?: number
 }
@@ -48,6 +61,7 @@ const initialState: ConversationState = {
   totalCount: undefined,
   isTyping: false,
   editMessageId: undefined,
+  replyToMessage: undefined,
   firstMessageUnreadId: undefined,
   unreadMessagesCount: undefined
 }
@@ -91,6 +105,12 @@ export const conversationSlice = createSlice({
       action: PayloadAction<ConversationState['editMessageId']>
     ) => {
       state.editMessageId = action.payload
+    },
+    setConversationReplyToMessage: (
+      state,
+      action: PayloadAction<ConversationState['replyToMessage']>
+    ) => {
+      state.replyToMessage = action.payload
     },
     setConversationFirstMessageUnreadId: (
       state,
@@ -153,6 +173,7 @@ export const {
   setConversationTotalCount,
   setConversationIsTyping,
   setConversationEditMessageId,
+  setConversationReplyToMessage,
   setConversationFirstMessageUnreadId,
   readConversationMessages,
   addConversationMessage,
@@ -174,3 +195,5 @@ export const selectConversationEditMessageId = (state: RootState) =>
   state.conversation.editMessageId
 export const selectConversationFirstMessageUnreadId = (state: RootState) =>
   state.conversation.firstMessageUnreadId
+export const selectConversationReplyToMessage = (state: RootState) =>
+  state.conversation.replyToMessage
